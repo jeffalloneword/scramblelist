@@ -1,0 +1,32 @@
+{
+  "name": "gift-exchange-app",
+  "version": "1.0.0",
+  "description": "A mobile-optimized web app for generating a gift exchange list.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "webpack serve --mode development",
+    "build": "webpack --mode production"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/preset-env": "^7.16.0",
+    "@babel/preset-react": "^7.16.0",
+    "babel-loader": "^8.2.3",
+    "webpack": "^5.64.4",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.6.0"
+  },
+  "keywords": [
+    "gift",
+    "exchange",
+    "app",
+    "react"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
