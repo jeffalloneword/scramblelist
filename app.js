@@ -58,14 +58,23 @@ app.get('/api/setup', async (req, res) => {
     `);
     
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS exchange_participants (
+        id SERIAL PRIMARY KEY,
+        exchange_id INTEGER REFERENCES exchanges(id) ON DELETE CASCADE,
+        participant_id INTEGER REFERENCES participants(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(exchange_id, participant_id)
+      )
+    `);
+    
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS assignments (
         id SERIAL PRIMARY KEY,
-        exchange_id INTEGER REFERENCES exchanges(id),
-        giver_id INTEGER REFERENCES participants(id),
-        receiver_id INTEGER REFERENCES participants(id),
+        exchange_id INTEGER REFERENCES exchanges(id) ON DELETE CASCADE,
+        giver_id INTEGER REFERENCES participants(id) ON DELETE CASCADE,
+        receiver_id INTEGER REFERENCES participants(id) ON DELETE CASCADE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(exchange_id, giver_id),
-        UNIQUE(exchange_id, receiver_id)
+        UNIQUE(exchange_id, giver_id)
       )
     `);
     
@@ -110,6 +119,139 @@ app.post('/api/participants', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error adding participant:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API to create a new exchange with participants and assignments
+app.post('/api/exchanges', async (req, res) => {
+  const { title, description, participants, assignments } = req.body;
+  
+  if (!title) {
+    return res.status(400).json({ error: 'Title is required' });
+  }
+  
+  if (!participants || participants.length < 2) {
+    return res.status(400).json({ error: 'At least 2 participants are required' });
+  }
+  
+  if (!assignments || assignments.length === 0) {
+    return res.status(400).json({ error: 'Assignments are required' });
+  }
+  
+  // Start a transaction
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    // 1. Create exchange
+    const exchangeResult = await client.query(
+      'INSERT INTO exchanges (title, description) VALUES ($1, $2) RETURNING id',
+      [title, description || null]
+    );
+    const exchangeId = exchangeResult.rows[0].id;
+    
+    // 2. Link participants to the exchange
+    for (const participant of participants) {
+      await client.query(
+        'INSERT INTO exchange_participants (exchange_id, participant_id) VALUES ($1, $2)',
+        [exchangeId, participant.id]
+      );
+    }
+    
+    // 3. Save assignments
+    for (const assignment of assignments) {
+      await client.query(
+        'INSERT INTO assignments (exchange_id, giver_id, receiver_id) VALUES ($1, $2, $3)',
+        [exchangeId, assignment.giver.id, assignment.receiver.id]
+      );
+    }
+    
+    await client.query('COMMIT');
+    
+    res.status(201).json({ 
+      id: exchangeId,
+      title,
+      description,
+      participants: participants.length,
+      assignments: assignments.length
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error creating exchange:', error);
+    res.status(500).json({ error: error.message });
+  } finally {
+    client.release();
+  }
+});
+
+// API to get all exchanges
+app.get('/api/exchanges', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM exchanges ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching exchanges:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API to get a specific exchange with participants and assignments
+app.get('/api/exchanges/:id', async (req, res) => {
+  const exchangeId = req.params.id;
+  
+  try {
+    // Get exchange details
+    const exchangeResult = await pool.query('SELECT * FROM exchanges WHERE id = $1', [exchangeId]);
+    
+    if (exchangeResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Exchange not found' });
+    }
+    
+    const exchange = exchangeResult.rows[0];
+    
+    // Get participants for this exchange
+    const participantsResult = await pool.query(`
+      SELECT p.* FROM participants p
+      JOIN exchange_participants ep ON p.id = ep.participant_id
+      WHERE ep.exchange_id = $1
+      ORDER BY p.name
+    `, [exchangeId]);
+    
+    // Get assignments for this exchange
+    const assignmentsResult = await pool.query(`
+      SELECT a.id, a.exchange_id, 
+        giver.id as giver_id, giver.name as giver_name, giver.email as giver_email,
+        receiver.id as receiver_id, receiver.name as receiver_name, receiver.email as receiver_email
+      FROM assignments a
+      JOIN participants giver ON a.giver_id = giver.id
+      JOIN participants receiver ON a.receiver_id = receiver.id
+      WHERE a.exchange_id = $1
+    `, [exchangeId]);
+    
+    // Format assignments
+    const assignments = assignmentsResult.rows.map(row => ({
+      id: row.id,
+      giver: {
+        id: row.giver_id,
+        name: row.giver_name,
+        email: row.giver_email
+      },
+      receiver: {
+        id: row.receiver_id,
+        name: row.receiver_name,
+        email: row.receiver_email
+      }
+    }));
+    
+    res.json({
+      ...exchange,
+      participants: participantsResult.rows,
+      assignments
+    });
+  } catch (error) {
+    console.error('Error fetching exchange details:', error);
     res.status(500).json({ error: error.message });
   }
 });

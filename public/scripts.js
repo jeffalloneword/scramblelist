@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsTitle = document.getElementById('results-title');
     const dbStatus = document.getElementById('database-status');
     const spinnerOverlay = document.getElementById('spinner-overlay');
+    const pastExchangesContainer = document.getElementById('past-exchanges-container');
     
     // Make sure spinner is hidden on page load
     spinnerOverlay.classList.add('hidden');
@@ -20,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDatabase().then(() => {
         // Load participants after database setup is complete
         loadParticipants();
+        // Load past exchanges
+        loadPastExchanges();
     }).catch(error => {
         console.error('Error during database setup:', error);
     });
@@ -145,8 +148,28 @@ document.addEventListener('DOMContentLoaded', () => {
             // Shuffle participants and ensure no one gets themselves
             const assignments = generateRandomAssignments(participants);
             
-            // Simulate processing delay (10 seconds)
+            // Simulate processing delay for animation (10 seconds)
             await new Promise(resolve => setTimeout(resolve, 10000));
+            
+            // Save the exchange to the database
+            const saveResponse = await fetch('/api/exchanges', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title,
+                    description,
+                    participants,
+                    assignments
+                })
+            });
+            
+            if (!saveResponse.ok) {
+                throw new Error('Failed to save exchange');
+            }
+            
+            const savedExchange = await saveResponse.json();
             
             // Hide the spinner
             spinnerOverlay.classList.add('hidden');
@@ -163,13 +186,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 assignmentsList.appendChild(li);
             });
             
+            // Add exchange ID as a data attribute
+            resultsSection.dataset.exchangeId = savedExchange.id;
+            
             // Scroll to results
             resultsSection.scrollIntoView({ behavior: 'smooth' });
+            
+            // Update the past exchanges list
+            loadPastExchanges();
         } catch (error) {
             // Hide the spinner in case of error
             spinnerOverlay.classList.add('hidden');
             console.error('Error creating exchange:', error);
-            alert('Failed to create exchange');
+            alert('Failed to create exchange: ' + error.message);
         }
     }
     
@@ -220,5 +249,76 @@ document.addEventListener('DOMContentLoaded', () => {
             hour: '2-digit',
             minute: '2-digit'
         }).format(date);
+    }
+    
+    async function loadPastExchanges() {
+        try {
+            const response = await fetch('/api/exchanges');
+            const exchanges = await response.json();
+            
+            if (exchanges.length === 0) {
+                pastExchangesContainer.innerHTML = '<p class="empty-message">No exchanges created yet.</p>';
+                return;
+            }
+            
+            pastExchangesContainer.innerHTML = '';
+            
+            // Load each exchange with its details
+            for (const exchange of exchanges) {
+                const detailsResponse = await fetch(`/api/exchanges/${exchange.id}`);
+                if (!detailsResponse.ok) continue;
+                
+                const details = await detailsResponse.json();
+                const exchangeDiv = document.createElement('div');
+                exchangeDiv.classList.add('past-exchange-item');
+                
+                // Create the exchange header
+                const title = document.createElement('div');
+                title.classList.add('past-exchange-title');
+                title.textContent = details.title;
+                
+                const date = document.createElement('div');
+                date.classList.add('past-exchange-date');
+                date.textContent = formatDate(details.created_at);
+                
+                // Create description if available
+                let description = '';
+                if (details.description) {
+                    description = `<div class="past-exchange-description">${details.description}</div>`;
+                }
+                
+                // Create participants count
+                const participantsCount = document.createElement('div');
+                participantsCount.classList.add('exchange-participants-count');
+                participantsCount.textContent = `Participants: ${details.participants.length}`;
+                
+                // Create assignments list
+                const assignmentsList = document.createElement('ul');
+                assignmentsList.classList.add('exchange-assignments');
+                
+                details.assignments.forEach(assignment => {
+                    const li = document.createElement('li');
+                    li.textContent = `${assignment.giver.name} → ${assignment.receiver.name}`;
+                    assignmentsList.appendChild(li);
+                });
+                
+                // Assemble the exchange item
+                exchangeDiv.appendChild(title);
+                exchangeDiv.appendChild(date);
+                if (description) {
+                    const descDiv = document.createElement('div');
+                    descDiv.classList.add('past-exchange-description');
+                    descDiv.textContent = details.description;
+                    exchangeDiv.appendChild(descDiv);
+                }
+                exchangeDiv.appendChild(participantsCount);
+                exchangeDiv.appendChild(assignmentsList);
+                
+                pastExchangesContainer.appendChild(exchangeDiv);
+            }
+        } catch (error) {
+            console.error('Error loading past exchanges:', error);
+            pastExchangesContainer.innerHTML = '<p class="empty-message">Error loading exchanges.</p>';
+        }
     }
 });
