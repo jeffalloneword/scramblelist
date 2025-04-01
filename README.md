@@ -62,12 +62,26 @@ The application requires PostgreSQL database access. Ensure one of the following
 
 The application will automatically detect and use these variables to connect to your database.
 
-### Deployment Steps
+### Standard Deployment Steps
 
 1. Ensure Node.js is installed (v14 or later recommended)
 2. Set the database environment variables as described above
-3. Start the application with: `node app.js`
+3. Start the application with: `node app.js` or `./start.sh`
 4. The application will run on port 5000 by default
+
+### Deploying on Replit
+
+1. Fork or clone this repository to your Replit account
+2. Make sure the NodeJS environment is selected
+3. Set up the database:
+   - In Replit, go to "Secrets" in the Tools panel
+   - Add your database credentials as secrets (DATABASE_URL or individual PostgreSQL variables)
+4. Deploy using one of these methods:
+   - Click the "Deploy" button in the Replit interface
+   - Or run `node app.js` directly in the Shell
+5. Your app will be available at your Replit subdomain
+
+Note: The application includes fallback in-memory storage if no database is configured, so you can test it without setting up a database, but data won't persist between restarts.
 
 ### Authentication
 
