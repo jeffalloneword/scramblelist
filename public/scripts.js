@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const assignmentsList = document.getElementById('assignments-list');
     const resultsTitle = document.getElementById('results-title');
     const dbStatus = document.getElementById('database-status');
+    const spinnerOverlay = document.getElementById('spinner-overlay');
     
     // Check database connection
     checkDatabaseConnection();
@@ -135,8 +136,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
+            // Show the loading spinner
+            spinnerOverlay.classList.remove('hidden');
+            
             // Shuffle participants and ensure no one gets themselves
             const assignments = generateRandomAssignments(participants);
+            
+            // Simulate processing delay (5 seconds)
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            
+            // Hide the spinner
+            spinnerOverlay.classList.add('hidden');
             
             // Show the results
             resultsSection.classList.remove('hidden');
@@ -153,6 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Scroll to results
             resultsSection.scrollIntoView({ behavior: 'smooth' });
         } catch (error) {
+            // Hide the spinner in case of error
+            spinnerOverlay.classList.add('hidden');
             console.error('Error creating exchange:', error);
             alert('Failed to create exchange');
         }
