@@ -175,14 +175,14 @@ textarea {
     justify-content: center;
 }
 
-/* Loading Spinner */
+/* Cat Animation */
 .spinner-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: #1a1a1a; /* Dark background */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -193,18 +193,153 @@ textarea {
     display: none !important;
 }
 
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #d33;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+.cat-animation {
+    position: relative;
+    width: 300px;
+    height: 300px;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.cat {
+    position: absolute;
+    width: 60px;
+    height: 40px;
+    background-color: #000; /* Black cat silhouette */
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    top: 50%;
+    left: 30%;
+    animation: cat-chase 4s infinite linear;
+    z-index: 10;
+}
+
+.cat::before, .cat::after {
+    content: '';
+    position: absolute;
+    background-color: #000;
+    border-radius: 50%;
+}
+
+/* Cat head */
+.cat::before {
+    width: 35px;
+    height: 35px;
+    top: -20px;
+    left: 12px;
+}
+
+/* Cat ears */
+.cat::after {
+    width: 10px;
+    height: 15px;
+    top: -29px;
+    left: 14px;
+    border-radius: 50% 50% 0 0;
+    box-shadow: 20px 0 0 #000;
+}
+
+/* Cat tail */
+.tail {
+    position: absolute;
+    width: 20px;
+    height: 40px;
+    background-color: #000;
+    top: -10px;
+    right: -15px;
+    border-radius: 0 50% 50% 0;
+    transform-origin: 0 50%;
+    animation: tail-wag 0.8s infinite alternate;
+}
+
+/* Cat legs */
+.legs {
+    position: absolute;
+    width: 100%;
+    height: 15px;
+    bottom: -12px;
+    left: 0;
+}
+
+.legs::before, .legs::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 15px;
+    background-color: #000;
+    border-radius: 0 0 5px 5px;
+}
+
+.legs::before {
+    left: 10px;
+    animation: front-leg 0.4s infinite alternate;
+}
+
+.legs::after {
+    right: 10px;
+    animation: back-leg 0.4s infinite alternate-reverse;
+}
+
+@keyframes tail-wag {
+    0% { transform: rotate(-15deg); }
+    100% { transform: rotate(15deg); }
+}
+
+@keyframes front-leg {
+    0% { height: 15px; }
+    100% { height: 12px; }
+}
+
+@keyframes back-leg {
+    0% { height: 12px; }
+    100% { height: 15px; }
+}
+
+.ball {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background-color: #ff5722; /* Orange ball */
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    animation: ball-move 4s infinite linear;
+}
+
+@keyframes cat-chase {
+    0% { 
+        transform: translate(0, 0) rotate(0deg); 
+    }
+    25% { 
+        transform: translate(120px, -60px) rotate(40deg); 
+    }
+    50% { 
+        transform: translate(100px, 90px) rotate(-30deg); 
+    }
+    75% { 
+        transform: translate(-60px, 60px) rotate(-60deg); 
+    }
+    100% { 
+        transform: translate(0, 0) rotate(0deg); 
+    }
+}
+
+@keyframes ball-move {
+    0% { 
+        transform: translate(0, 0); 
+    }
+    20% { 
+        transform: translate(100px, -50px); 
+    }
+    40% { 
+        transform: translate(80px, 80px); 
+    }
+    60% { 
+        transform: translate(-50px, 50px); 
+    }
+    80% { 
+        transform: translate(-80px, -60px); 
+    }
+    100% { 
+        transform: translate(0, 0); 
+    }
 }
 
 /* Footer Styles */
