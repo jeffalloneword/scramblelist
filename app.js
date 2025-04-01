@@ -12,8 +12,17 @@ const CORRECT_PASSWORD = 'two-pretzels!1';
 const CORRECT_PASSWORD_HASH = crypto.createHash('sha256').update(CORRECT_PASSWORD).digest('hex');
 
 // PostgreSQL connection pool using the DATABASE_URL from environment variables
+// If DATABASE_URL is not set, construct it from individual PostgreSQL variables
+let connectionString = process.env.DATABASE_URL;
+
+if (!connectionString && process.env.PGHOST && process.env.PGUSER && 
+    process.env.PGPASSWORD && process.env.PGDATABASE && process.env.PGPORT) {
+  connectionString = `postgresql://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${process.env.PGPORT}/${process.env.PGDATABASE}`;
+  console.log('DATABASE_URL constructed from individual PostgreSQL environment variables');
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: connectionString,
 });
 
 // Middleware for parsing JSON bodies and cookies
@@ -392,5 +401,15 @@ app.get('/', (req, res) => {
 // Start the server
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running at http://0.0.0.0:${port}`);
-  console.log(`Database URL is ${process.env.DATABASE_URL ? 'configured' : 'not configured'}`);
+  
+  if (connectionString) {
+    console.log(`Database connection is configured`);
+    // Test the database connection immediately
+    pool.query('SELECT NOW()')
+      .then(() => console.log('Successfully connected to PostgreSQL database'))
+      .catch(err => console.error('Database connection error:', err.message));
+  } else {
+    console.log(`WARNING: Database connection is not configured. The application might not function correctly.`);
+    console.log(`Please set DATABASE_URL or all PostgreSQL environment variables (PGHOST, PGUSER, PGPASSWORD, PGDATABASE, PGPORT).`);
+  }
 });

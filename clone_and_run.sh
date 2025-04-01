@@ -17,9 +17,17 @@ fi
 # Check if PostgreSQL environment variables are set
 echo "Checking database connection..."
 if [ -z "$DATABASE_URL" ]; then
-    echo "DATABASE_URL is not set. Database functionality may not work properly."
+    # If DATABASE_URL is not set, but we have individual components, construct it
+    if [ ! -z "$PGHOST" ] && [ ! -z "$PGUSER" ] && [ ! -z "$PGPASSWORD" ] && [ ! -z "$PGDATABASE" ] && [ ! -z "$PGPORT" ]; then
+        export DATABASE_URL="postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}"
+        echo "DATABASE_URL constructed from individual PostgreSQL environment variables."
+    else
+        echo "WARNING: Database environment variables are not properly set."
+        echo "Please make sure either DATABASE_URL or all PostgreSQL variables (PGHOST, PGUSER, PGPASSWORD, PGDATABASE, PGPORT) are set."
+        echo "Continuing with limited functionality..."
+    fi
 else
-    echo "Database connection is configured."
+    echo "Database connection is configured via DATABASE_URL."
 fi
 
 # Run the application

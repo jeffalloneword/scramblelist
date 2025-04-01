@@ -30,6 +30,40 @@ This will:
 
 You can then access the application in your browser at: http://0.0.0.0:5000
 
+## Deployment
+
+### Database Configuration
+
+The application requires PostgreSQL database access. Ensure one of the following is set up:
+
+1. Set the `DATABASE_URL` environment variable with your PostgreSQL connection string:
+   ```
+   DATABASE_URL=postgresql://username:password@hostname:port/database
+   ```
+
+2. OR set all of the following environment variables:
+   - `PGHOST`: PostgreSQL server hostname
+   - `PGUSER`: PostgreSQL username
+   - `PGPASSWORD`: PostgreSQL password
+   - `PGDATABASE`: PostgreSQL database name
+   - `PGPORT`: PostgreSQL server port (usually 5432)
+
+The application will automatically detect and use these variables to connect to your database.
+
+### Deployment Steps
+
+1. Ensure Node.js is installed (v14 or later recommended)
+2. Set the database environment variables as described above
+3. Start the application with: `node app.js`
+4. The application will run on port 5000 by default
+
+### Authentication
+
+The application is protected with a password. The default password is:
+```
+two-pretzels!1
+```
+
 ## Database Setup
 
 The application uses a PostgreSQL database to store participant information. The database schema includes the following tables:
