@@ -1,8 +1,13 @@
 const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
+const crypto = require('crypto');
 const app = express();
 const port = 5000;
+
+// Set a secure password - in production this would be in environment variables
+// Using a hardcoded password for simplicity
+const CORRECT_PASSWORD_HASH = crypto.createHash('sha256').update('two-pretzels!1').digest('hex');
 
 // PostgreSQL connection pool using the DATABASE_URL from environment variables
 const pool = new Pool({
@@ -13,8 +18,36 @@ const pool = new Pool({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files for login page only
+app.use(express.static(path.join(__dirname, 'public'), {
+  index: 'login.html', // Set login.html as the default index
+}));
+
+// Authentication middleware
+const authenticate = (req, res, next) => {
+  // Check if request has a valid auth token
+  const authToken = req.get('Authorization');
+  
+  // If no token present but this is a login request, allow it
+  if (req.path === '/auth/login') {
+    return next();
+  }
+  
+  // If this is a static resource for the login page, allow it
+  if (req.path === '/login.html' || req.path === '/favicon.ico' || req.path === '/') {
+    return next();
+  }
+  
+  // For API endpoints and protected resources, require auth
+  if (!authToken || authToken !== `Bearer ${CORRECT_PASSWORD_HASH}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  next();
+};
+
+// Apply auth middleware to all routes except the login page
+app.use(authenticate);
 
 // API Routes
 app.get('/api/health', async (req, res) => {
@@ -256,9 +289,39 @@ app.get('/api/exchanges/:id', async (req, res) => {
   }
 });
 
-// HTML for the main page
-app.get('/', (req, res) => {
+// Login authentication endpoint
+app.post('/auth/login', (req, res) => {
+  const { password } = req.body;
+  
+  if (!password) {
+    return res.status(400).json({ error: 'Password is required' });
+  }
+  
+  // Hash the provided password and compare with the correct hash
+  const providedHash = crypto.createHash('sha256').update(password).digest('hex');
+  
+  if (providedHash === CORRECT_PASSWORD_HASH) {
+    // Return success with the auth token
+    return res.json({ 
+      success: true, 
+      token: CORRECT_PASSWORD_HASH
+    });
+  } else {
+    // Return error for incorrect password
+    return res.status(401).json({ 
+      error: 'Invalid password' 
+    });
+  }
+});
+
+// Protected main app page
+app.get('/app', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// HTML for the login page (root)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 // Start the server

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scramblelist - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        .login-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #d33;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            width: 100%;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .error-message {
+            color: #d33;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .cat-logo {
+            margin-bottom: 1.5rem;
+            width: 80px;
+            height: 80px;
+            position: relative;
+            margin: 0 auto 1.5rem;
+        }
+        
+        .cat-logo::before {
+            content: '';
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            background-color: #000;
+            border-radius: 50%;
+            top: 10px;
+            left: 22px;
+        }
+        
+        .cat-logo::after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 40px;
+            background-color: #000;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            top: 40px;
+            left: 10px;
+        }
+        
+        .cat-ears {
+            position: absolute;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+        
+        .cat-ears::before, .cat-ears::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 20px solid #000;
+            top: -3px;
+        }
+        
+        .cat-ears::before {
+            left: 14px;
+            transform: rotate(-15deg);
+        }
+        
+        .cat-ears::after {
+            right: 14px;
+            transform: rotate(15deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="cat-logo">
+            <div class="cat-ears"></div>
+        </div>
+        <h1>Scramblelist</h1>
+        <p>Gift Exchange Organizer</p>
+        
+        <form id="login-form">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Enter</button>
+            <div id="error-message" class="error-message">Incorrect password. Please try again.</div>
+        </form>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Check if already authenticated
+            const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
+            if (isAuthenticated) {
+                window.location.href = '/app';
+                return;
+            }
+            
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const password = document.getElementById('password').value;
+                
+                try {
+                    const response = await fetch('/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ password })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Store authentication information
+                        sessionStorage.setItem('authenticated', 'true');
+                        sessionStorage.setItem('authToken', data.token);
+                        
+                        // Redirect to the main app
+                        window.location.href = '/app';
+                    } else {
+                        errorMessage.style.display = 'block';
+                        document.getElementById('password').value = '';
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    errorMessage.textContent = 'An error occurred. Please try again.';
+                    errorMessage.style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

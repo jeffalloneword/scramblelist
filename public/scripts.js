@@ -1,4 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication
+    const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
+    const authToken = sessionStorage.getItem('authToken');
+    
+    // If not on the login page and not authenticated, redirect to login
+    if (!window.location.pathname.includes('login.html') && 
+        !isAuthenticated && 
+        !window.location.pathname.includes('/auth/login')) {
+        window.location.href = '/';
+        return;
+    }
+    
+    // Add auth token to all fetch requests
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+        // Don't add auth header for login requests
+        if (url.includes('/auth/login')) {
+            return originalFetch(url, options);
+        }
+        
+        // Add the Authorization header to the options
+        const authOptions = {
+            ...options,
+            headers: {
+                ...options.headers,
+                'Authorization': `Bearer ${authToken}`
+            }
+        };
+        
+        return originalFetch(url, authOptions);
+    };
+
     // DOM elements
     const addParticipantForm = document.getElementById('add-participant-form');
     const participantList = document.getElementById('participant-list');
@@ -12,24 +44,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const pastExchangesContainer = document.getElementById('past-exchanges-container');
     
     // Make sure spinner is hidden on page load
-    spinnerOverlay.classList.add('hidden');
+    if (spinnerOverlay) {
+        spinnerOverlay.classList.add('hidden');
+    }
     
-    // Check database connection
-    checkDatabaseConnection();
-    
-    // Initialize the participants table and then load participants
-    setupDatabase().then(() => {
-        // Load participants after database setup is complete
-        loadParticipants();
-        // Load past exchanges
-        loadPastExchanges();
-    }).catch(error => {
-        console.error('Error during database setup:', error);
-    });
-    
-    // Event Listeners
-    addParticipantForm.addEventListener('submit', handleAddParticipant);
-    createExchangeForm.addEventListener('submit', handleCreateExchange);
+    // Only proceed with app initialization if we have all the necessary elements
+    if (addParticipantForm && participantList) {
+        // Check database connection
+        checkDatabaseConnection();
+        
+        // Initialize the participants table and then load participants
+        setupDatabase().then(() => {
+            // Load participants after database setup is complete
+            loadParticipants();
+            // Load past exchanges
+            loadPastExchanges();
+        }).catch(error => {
+            console.error('Error during database setup:', error);
+        });
+        
+        // Event Listeners
+        addParticipantForm.addEventListener('submit', handleAddParticipant);
+        createExchangeForm.addEventListener('submit', handleCreateExchange);
+    }
     
     // Functions
     async function checkDatabaseConnection() {
