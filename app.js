@@ -2,44 +2,49 @@ const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
 const crypto = require('crypto');
+const cookieParser = require('cookie-parser');
 const app = express();
 const port = 5000;
 
 // Set a secure password - in production this would be in environment variables
 // Using a hardcoded password for simplicity
-const CORRECT_PASSWORD_HASH = crypto.createHash('sha256').update('two-pretzels!1').digest('hex');
+const CORRECT_PASSWORD = 'two-pretzels!1';
+const CORRECT_PASSWORD_HASH = crypto.createHash('sha256').update(CORRECT_PASSWORD).digest('hex');
 
 // PostgreSQL connection pool using the DATABASE_URL from environment variables
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// Middleware for parsing JSON bodies
+// Middleware for parsing JSON bodies and cookies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-// Serve static files for login page only
+// Serve static files with login-simple as the default page
 app.use(express.static(path.join(__dirname, 'public'), {
-  index: 'login.html', // Set login.html as the default index
+  index: 'login-simple.html',
 }));
 
-// Authentication middleware
+// Authentication middleware using cookies
 const authenticate = (req, res, next) => {
-  // Check if request has a valid auth token
-  const authToken = req.get('Authorization');
-  
-  // If no token present but this is a login request, allow it
-  if (req.path === '/auth/login') {
+  // Check if this is public resource that doesn't need authentication
+  if (
+    req.path === '/auth/login' || 
+    req.path === '/auth/login-simple' ||
+    req.path === '/login-simple.html' || 
+    req.path === '/login.html' || 
+    req.path === '/favicon.ico' || 
+    req.path === '/' || 
+    req.path === '/styles.css'
+  ) {
     return next();
   }
   
-  // If this is a static resource for the login page or styles, allow it
-  if (req.path === '/login.html' || req.path === '/favicon.ico' || req.path === '/' || req.path === '/styles.css') {
-    return next();
-  }
+  // Check the auth cookie
+  const isAuthenticated = req.cookies && req.cookies.authenticated === 'true';
   
-  // For API endpoints and protected resources, require auth
-  if (!authToken || authToken !== `Bearer ${CORRECT_PASSWORD_HASH}`) {
+  if (!isAuthenticated) {
     // For API calls, return JSON error
     if (req.path.startsWith('/api/')) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -51,7 +56,7 @@ const authenticate = (req, res, next) => {
   next();
 };
 
-// Apply auth middleware to all routes except the login page
+// Apply auth middleware to all routes
 app.use(authenticate);
 
 // API Routes
@@ -294,7 +299,43 @@ app.get('/api/exchanges/:id', async (req, res) => {
   }
 });
 
-// Login authentication endpoint
+// Simple form-based login handler - used by the simple login form
+app.post('/auth/login-simple', (req, res) => {
+  const { password } = req.body;
+  
+  console.log('Login attempt with password');
+  
+  if (password === CORRECT_PASSWORD) {
+    // Set a cookie that will be used to authenticate the user
+    res.cookie('authenticated', 'true', { 
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+    
+    // Redirect to the application page
+    return res.redirect('/app');
+  } else {
+    // Show an error message
+    return res.status(401).send(`
+      <html>
+        <head>
+          <title>Invalid Password</title>
+          <meta http-equiv="refresh" content="3;url=/" />
+          <style>
+            body { font-family: sans-serif; text-align: center; padding: 50px; }
+            .error { color: #d33; }
+          </style>
+        </head>
+        <body>
+          <h1 class="error">Invalid Password</h1>
+          <p>The password you entered is incorrect. Redirecting back to login page...</p>
+        </body>
+      </html>
+    `);
+  }
+});
+
+// JSON API login endpoint - used by the original login page
 app.post('/auth/login', (req, res) => {
   const { password } = req.body;
   
@@ -306,10 +347,15 @@ app.post('/auth/login', (req, res) => {
   const providedHash = crypto.createHash('sha256').update(password).digest('hex');
   
   if (providedHash === CORRECT_PASSWORD_HASH) {
-    // Return success with the auth token
+    // Set the authentication cookie
+    res.cookie('authenticated', 'true', { 
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+    
+    // Return success
     return res.json({ 
-      success: true, 
-      token: CORRECT_PASSWORD_HASH
+      success: true
     });
   } else {
     // Return error for incorrect password
@@ -319,14 +365,28 @@ app.post('/auth/login', (req, res) => {
   }
 });
 
+// Route to log out the user
+app.get('/logout', (req, res) => {
+  res.clearCookie('authenticated');
+  res.redirect('/');
+});
+
 // Protected main app page
 app.get('/app', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  if (req.cookies && req.cookies.authenticated === 'true') {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  } else {
+    res.redirect('/');
+  }
 });
 
 // HTML for the login page (root)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  // If already authenticated, redirect to the app
+  if (req.cookies && req.cookies.authenticated === 'true') {
+    return res.redirect('/app');
+  }
+  res.sendFile(path.join(__dirname, 'public', 'login-simple.html'));
 });
 
 // Start the server
