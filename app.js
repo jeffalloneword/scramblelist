@@ -33,14 +33,19 @@ const authenticate = (req, res, next) => {
     return next();
   }
   
-  // If this is a static resource for the login page, allow it
-  if (req.path === '/login.html' || req.path === '/favicon.ico' || req.path === '/') {
+  // If this is a static resource for the login page or styles, allow it
+  if (req.path === '/login.html' || req.path === '/favicon.ico' || req.path === '/' || req.path === '/styles.css') {
     return next();
   }
   
   // For API endpoints and protected resources, require auth
   if (!authToken || authToken !== `Bearer ${CORRECT_PASSWORD_HASH}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    // For API calls, return JSON error
+    if (req.path.startsWith('/api/')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    // For other resources, redirect to login page
+    return res.redirect('/');
   }
   
   next();

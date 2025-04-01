@@ -2,34 +2,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check authentication
     const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
     const authToken = sessionStorage.getItem('authToken');
+
+    console.log("Auth check - Path:", window.location.pathname);
+    console.log("Auth check - Is authenticated:", isAuthenticated);
     
     // If not on the login page and not authenticated, redirect to login
-    if (!window.location.pathname.includes('login.html') && 
+    if (window.location.pathname !== '/' && 
+        window.location.pathname !== '/login.html' && 
         !isAuthenticated && 
         !window.location.pathname.includes('/auth/login')) {
+        console.log("Redirecting to login page");
         window.location.href = '/';
         return;
     }
     
-    // Add auth token to all fetch requests
-    const originalFetch = window.fetch;
-    window.fetch = function(url, options = {}) {
-        // Don't add auth header for login requests
-        if (url.includes('/auth/login')) {
-            return originalFetch(url, options);
-        }
-        
-        // Add the Authorization header to the options
-        const authOptions = {
-            ...options,
-            headers: {
-                ...options.headers,
-                'Authorization': `Bearer ${authToken}`
+    // Add auth token to all fetch requests if we have a token
+    if (authToken) {
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            // Don't add auth header for login requests
+            if (url.includes('/auth/login')) {
+                return originalFetch(url, options);
             }
+            
+            // Create headers object if it doesn't exist
+            if (!options.headers) {
+                options.headers = {};
+            }
+            
+            // Convert headers to plain object if it's Headers instance
+            if (options.headers instanceof Headers) {
+                const plainHeaders = {};
+                for (const [key, value] of options.headers.entries()) {
+                    plainHeaders[key] = value;
+                }
+                options.headers = plainHeaders;
+            }
+            
+            // Add the Authorization header to the options
+            const authOptions = {
+                ...options,
+                headers: {
+                    ...options.headers,
+                    'Authorization': `Bearer ${authToken}`
+                }
+            };
+            
+            return originalFetch(url, authOptions);
         };
-        
-        return originalFetch(url, authOptions);
-    };
+    }
 
     // DOM elements
     const addParticipantForm = document.getElementById('add-participant-form');
