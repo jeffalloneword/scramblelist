@@ -74,12 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check database connection
         checkDatabaseConnection();
         
-        // Initialize the participants table and then load participants
+        // Initialize the participants table and only load past exchanges initially
         setupDatabase().then(() => {
-            // Load participants after database setup is complete
-            loadParticipants();
-            // Load past exchanges
+            // Don't automatically load participants - only load exchanges
+            // They'll be able to add participants or load a previous exchange
             loadPastExchanges();
+            
+            // Show empty participants message
+            participantList.innerHTML = '<li class="empty-message">No participants added yet. Add participants above or select a previous exchange.</li>';
         }).catch(error => {
             console.error('Error during database setup:', error);
         });
@@ -309,6 +311,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }).format(date);
     }
     
+    // Helper function to load participants from a specific exchange
+    function loadExchangeParticipants(exchangeId, participants) {
+        if (!participants || participants.length === 0) {
+            participantList.innerHTML = '<li class="empty-message">No participants in this exchange.</li>';
+            return;
+        }
+        
+        participantList.innerHTML = '';
+        
+        // Add control buttons at the top
+        const controls = document.createElement('li');
+        controls.classList.add('participant-controls');
+        controls.innerHTML = `
+            <button id="clear-participants" class="btn mini danger">Clear All</button>
+            <button id="load-all-participants" class="btn mini secondary">Load All Participants</button>
+        `;
+        participantList.appendChild(controls);
+        
+        // Add participants from this exchange
+        participants.forEach(participant => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${participant.name}${participant.email ? ` (${participant.email})` : ''}</span>
+                <span class="exchange-reference">From exchange #${exchangeId}</span>
+            `;
+            participantList.appendChild(li);
+        });
+        
+        // Add a notice that these are participants from a previous exchange
+        const notice = document.createElement('li');
+        notice.classList.add('exchange-notice');
+        notice.innerHTML = '<em>Viewing participants from selected exchange. You can add or remove participants for new exchanges. Each exchange can have different participants.</em>';
+        participantList.appendChild(notice);
+        
+        // Add event listeners for the control buttons
+        document.getElementById('clear-participants').addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent event from bubbling up
+            participantList.innerHTML = '<li class="empty-message">No participants added yet. Add participants above or select a previous exchange.</li>';
+        });
+        
+        document.getElementById('load-all-participants').addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent event from bubbling up
+            loadParticipants();
+        });
+    }
+    
     async function loadPastExchanges() {
         try {
             const response = await fetch('/api/exchanges');
@@ -380,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 exchangeItem.appendChild(date);
                 exchangeItem.appendChild(detailsSection);
                 
-                // Add click event to toggle details
+                // Add click event to toggle details and load participants
                 exchangeItem.addEventListener('click', function() {
                     // Close any currently open exchange
                     document.querySelectorAll('.past-exchange-item.active').forEach(item => {
@@ -392,8 +440,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Toggle this exchange
                     this.classList.toggle('active');
                     
-                    // Scroll this exchange into view if it's active
+                    // If this exchange is now active, load its participants
                     if (this.classList.contains('active')) {
+                        // Get the exchange ID
+                        const exchangeId = this.dataset.exchangeId;
+                        
+                        // Load the participants for this exchange
+                        loadExchangeParticipants(exchangeId, details.participants);
+                        
+                        // Scroll this exchange into view
                         this.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
                 });
