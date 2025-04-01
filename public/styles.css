@@ -277,6 +277,46 @@ textarea {
     animation: back-leg 0.4s infinite alternate-reverse;
 }
 
+/* Cat paws */
+.paws {
+    position: absolute;
+    width: 100%;
+    top: 5px;
+    left: 0;
+}
+
+.paws::before, .paws::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 10px;
+    background-color: #000;
+    border-radius: 50% 50% 0 0;
+    top: 20px;
+}
+
+.paws::before {
+    left: 5px;
+    transform: rotate(20deg);
+    animation: left-paw 0.5s infinite alternate;
+}
+
+.paws::after {
+    left: 22px;
+    transform: rotate(-20deg);
+    animation: right-paw 0.5s infinite alternate-reverse;
+}
+
+@keyframes left-paw {
+    0% { transform: rotate(20deg) translateY(0); }
+    100% { transform: rotate(15deg) translateY(-2px); }
+}
+
+@keyframes right-paw {
+    0% { transform: rotate(-20deg) translateY(-2px); }
+    100% { transform: rotate(-15deg) translateY(0); }
+}
+
 @keyframes tail-wag {
     0% { transform: rotate(-15deg); }
     100% { transform: rotate(15deg); }

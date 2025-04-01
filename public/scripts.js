@@ -145,8 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Shuffle participants and ensure no one gets themselves
             const assignments = generateRandomAssignments(participants);
             
-            // Simulate processing delay (5 seconds)
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            // Simulate processing delay (10 seconds)
+            await new Promise(resolve => setTimeout(resolve, 10000));
             
             // Hide the spinner
             spinnerOverlay.classList.add('hidden');
