@@ -13,14 +13,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Scramblelist Runner"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "scramblelist_runner"
+args = "Scramblelist App"
 
 [[workflows.workflow]]
-name = "Scramblelist Runner"
+name = "Scramblelist App"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -31,22 +27,8 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash clone_and_run.sh"
+args = "node app.js"
 waitForPort = 5000
-
-[[workflows.workflow]]
-name = "scramblelist_runner"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "bash clone_and_run.sh"
 
 [deployment]
 run = ["sh", "-c", "bash clone_and_run.sh"]

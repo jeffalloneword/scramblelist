@@ -1,0 +1,16 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "description": "This repository contains scripts to clone and run the [Scramblelist repository](https://github.com/jeffalloneword/scramblelist) by Jeff Alloneword.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "pg": "^8.14.1"
+  }
+}
