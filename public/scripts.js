@@ -261,18 +261,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
+            // Create a list for exchanges
+            const exchangesList = document.createElement('ul');
+            exchangesList.id = 'past-exchanges-list';
             pastExchangesContainer.innerHTML = '';
+            pastExchangesContainer.appendChild(exchangesList);
             
-            // Load each exchange with its details
+            // Load and display each exchange as a list item
             for (const exchange of exchanges) {
                 const detailsResponse = await fetch(`/api/exchanges/${exchange.id}`);
                 if (!detailsResponse.ok) continue;
                 
                 const details = await detailsResponse.json();
-                const exchangeDiv = document.createElement('div');
-                exchangeDiv.classList.add('past-exchange-item');
                 
-                // Create the exchange header
+                // Create list item for this exchange
+                const exchangeItem = document.createElement('li');
+                exchangeItem.classList.add('past-exchange-item');
+                exchangeItem.dataset.exchangeId = details.id;
+                
+                // Create the exchange header (always visible)
                 const title = document.createElement('div');
                 title.classList.add('past-exchange-title');
                 title.textContent = details.title;
@@ -281,16 +288,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 date.classList.add('past-exchange-date');
                 date.textContent = formatDate(details.created_at);
                 
-                // Create description if available
-                let description = '';
+                // Create the details section (hidden by default)
+                const detailsSection = document.createElement('div');
+                detailsSection.classList.add('exchange-details');
+                
+                // Add description if available
                 if (details.description) {
-                    description = `<div class="past-exchange-description">${details.description}</div>`;
+                    const descDiv = document.createElement('div');
+                    descDiv.classList.add('past-exchange-description');
+                    descDiv.textContent = details.description;
+                    detailsSection.appendChild(descDiv);
                 }
                 
                 // Create participants count
                 const participantsCount = document.createElement('div');
                 participantsCount.classList.add('exchange-participants-count');
                 participantsCount.textContent = `Participants: ${details.participants.length}`;
+                detailsSection.appendChild(participantsCount);
                 
                 // Create assignments list
                 const assignmentsList = document.createElement('ul');
@@ -301,20 +315,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     li.textContent = `${assignment.giver.name} → ${assignment.receiver.name}`;
                     assignmentsList.appendChild(li);
                 });
+                detailsSection.appendChild(assignmentsList);
                 
                 // Assemble the exchange item
-                exchangeDiv.appendChild(title);
-                exchangeDiv.appendChild(date);
-                if (description) {
-                    const descDiv = document.createElement('div');
-                    descDiv.classList.add('past-exchange-description');
-                    descDiv.textContent = details.description;
-                    exchangeDiv.appendChild(descDiv);
-                }
-                exchangeDiv.appendChild(participantsCount);
-                exchangeDiv.appendChild(assignmentsList);
+                exchangeItem.appendChild(title);
+                exchangeItem.appendChild(date);
+                exchangeItem.appendChild(detailsSection);
                 
-                pastExchangesContainer.appendChild(exchangeDiv);
+                // Add click event to toggle details
+                exchangeItem.addEventListener('click', function() {
+                    // Close any currently open exchange
+                    document.querySelectorAll('.past-exchange-item.active').forEach(item => {
+                        if (item !== this) {
+                            item.classList.remove('active');
+                        }
+                    });
+                    
+                    // Toggle this exchange
+                    this.classList.toggle('active');
+                    
+                    // Scroll this exchange into view if it's active
+                    if (this.classList.contains('active')) {
+                        this.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                });
+                
+                exchangesList.appendChild(exchangeItem);
             }
         } catch (error) {
             console.error('Error loading past exchanges:', error);
