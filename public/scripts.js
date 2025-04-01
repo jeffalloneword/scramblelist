@@ -80,8 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // They'll be able to add participants or load a previous exchange
             loadPastExchanges();
             
-            // Show empty participants message
-            participantList.innerHTML = '<li class="empty-message">No participants added yet. Add participants above or select a previous exchange.</li>';
+            // Show empty list with control buttons
+            clearParticipantsList();
         }).catch(error => {
             console.error('Error during database setup:', error);
         });
@@ -125,23 +125,72 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/participants');
             const participants = await response.json();
             
+            participantList.innerHTML = '';
+            
+            // Add control buttons at the top
+            const controls = document.createElement('li');
+            controls.classList.add('participant-controls');
+            controls.innerHTML = `
+                <button id="clear-participants" class="btn mini danger">Clear All</button>
+                <button id="load-all-participants" class="btn mini secondary">Load All Participants</button>
+            `;
+            participantList.appendChild(controls);
+            
             if (participants.length === 0) {
-                participantList.innerHTML = '<li class="empty-message">No participants added yet.</li>';
-                return;
+                const emptyMessage = document.createElement('li');
+                emptyMessage.classList.add('empty-message');
+                emptyMessage.textContent = 'No participants added yet.';
+                participantList.appendChild(emptyMessage);
+            } else {
+                participants.forEach(participant => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span>${participant.name}${participant.email ? ` (${participant.email})` : ''}</span>
+                        <span>${formatDate(participant.created_at)}</span>
+                    `;
+                    participantList.appendChild(li);
+                });
             }
             
-            participantList.innerHTML = '';
-            participants.forEach(participant => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span>${participant.name}${participant.email ? ` (${participant.email})` : ''}</span>
-                    <span>${formatDate(participant.created_at)}</span>
-                `;
-                participantList.appendChild(li);
+            // Add event listeners for the control buttons
+            document.getElementById('clear-participants').addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent event from bubbling up
+                clearParticipantsList();
+            });
+            
+            document.getElementById('load-all-participants').addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent event from bubbling up
+                loadParticipants();
             });
         } catch (error) {
             console.error('Error loading participants:', error);
-            participantList.innerHTML = '<li class="empty-message">Error loading participants</li>';
+            participantList.innerHTML = '';
+            const errorMessage = document.createElement('li');
+            errorMessage.classList.add('empty-message', 'error-message');
+            errorMessage.textContent = 'Error loading participants';
+            participantList.appendChild(errorMessage);
+            
+            // Still add the control buttons
+            const controls = document.createElement('li');
+            controls.classList.add('participant-controls');
+            controls.innerHTML = `
+                <button id="clear-participants" class="btn mini danger">Clear All</button>
+                <button id="load-all-participants" class="btn mini secondary">Load All Participants</button>
+            `;
+            
+            // Insert at the beginning
+            participantList.insertBefore(controls, participantList.firstChild);
+            
+            // Add event listeners for the control buttons
+            document.getElementById('clear-participants').addEventListener('click', function(e) {
+                e.stopPropagation();
+                clearParticipantsList();
+            });
+            
+            document.getElementById('load-all-participants').addEventListener('click', function(e) {
+                e.stopPropagation();
+                loadParticipants();
+            });
         }
     }
     
@@ -311,10 +360,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }).format(date);
     }
     
+    // Helper function to clear participants list but keep control buttons
+    function clearParticipantsList() {
+        // Clear the list
+        participantList.innerHTML = '';
+        
+        // Add control buttons at the top
+        const controls = document.createElement('li');
+        controls.classList.add('participant-controls');
+        controls.innerHTML = `
+            <button id="clear-participants" class="btn mini danger">Clear All</button>
+            <button id="load-all-participants" class="btn mini secondary">Load All Participants</button>
+        `;
+        participantList.appendChild(controls);
+        
+        // Add empty message
+        const emptyMessage = document.createElement('li');
+        emptyMessage.classList.add('empty-message');
+        emptyMessage.textContent = 'No participants added yet. Add participants above or select a previous exchange.';
+        participantList.appendChild(emptyMessage);
+        
+        // Add event listeners for the control buttons
+        document.getElementById('clear-participants').addEventListener('click', function(e) {
+            e.stopPropagation();
+            clearParticipantsList();
+        });
+        
+        document.getElementById('load-all-participants').addEventListener('click', function(e) {
+            e.stopPropagation();
+            loadParticipants();
+        });
+    }
+    
     // Helper function to load participants from a specific exchange
     function loadExchangeParticipants(exchangeId, participants) {
         if (!participants || participants.length === 0) {
-            participantList.innerHTML = '<li class="empty-message">No participants in this exchange.</li>';
+            clearParticipantsList();
             return;
         }
         
@@ -348,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add event listeners for the control buttons
         document.getElementById('clear-participants').addEventListener('click', function(e) {
             e.stopPropagation(); // Prevent event from bubbling up
-            participantList.innerHTML = '<li class="empty-message">No participants added yet. Add participants above or select a previous exchange.</li>';
+            clearParticipantsList();
         });
         
         document.getElementById('load-all-participants').addEventListener('click', function(e) {

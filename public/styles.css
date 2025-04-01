@@ -152,6 +152,13 @@ textarea {
     font-style: italic;
 }
 
+.error-message {
+    color: #d32f2f;
+    border-left: 3px solid #d32f2f;
+    background-color: #ffebee;
+    padding: 8px 12px;
+}
+
 /* Results Section */
 .hidden {
     display: none;
