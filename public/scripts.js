@@ -127,12 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             participantList.innerHTML = '';
             
-            // Add control buttons at the top
+            // Add control buttons at the top - only Clear All button for regular view
             const controls = document.createElement('li');
             controls.classList.add('participant-controls');
             controls.innerHTML = `
                 <button id="clear-participants" class="btn mini danger">Clear All</button>
-                <button id="load-all-participants" class="btn mini secondary">Load All Participants</button>
             `;
             participantList.appendChild(controls);
             
@@ -146,7 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const li = document.createElement('li');
                     li.innerHTML = `
                         <span>${participant.name}${participant.email ? ` (${participant.email})` : ''}</span>
-                        <span>${formatDate(participant.created_at)}</span>
                     `;
                     participantList.appendChild(li);
                 });
@@ -156,11 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('clear-participants').addEventListener('click', function(e) {
                 e.stopPropagation(); // Prevent event from bubbling up
                 clearParticipantsList();
-            });
-            
-            document.getElementById('load-all-participants').addEventListener('click', function(e) {
-                e.stopPropagation(); // Prevent event from bubbling up
-                loadParticipants();
             });
         } catch (error) {
             console.error('Error loading participants:', error);
@@ -175,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
             controls.classList.add('participant-controls');
             controls.innerHTML = `
                 <button id="clear-participants" class="btn mini danger">Clear All</button>
-                <button id="load-all-participants" class="btn mini secondary">Load All Participants</button>
             `;
             
             // Insert at the beginning
@@ -186,11 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 clearParticipantsList();
             });
-            
-            document.getElementById('load-all-participants').addEventListener('click', function(e) {
-                e.stopPropagation();
-                loadParticipants();
-            });
         }
     }
     
@@ -198,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         
         const name = document.getElementById('name').value;
-        const email = document.getElementById('email').value;
         
         if (!name.trim()) {
             alert('Name is required');
@@ -211,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ name, email })
+                body: JSON.stringify({ name, email: '' })
             });
             
             if (!response.ok) {
@@ -220,7 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Clear the form
             document.getElementById('name').value = '';
-            document.getElementById('email').value = '';
             
             // Reload participants
             loadParticipants();
@@ -365,12 +350,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear the list
         participantList.innerHTML = '';
         
-        // Add control buttons at the top
+        // Add control buttons at the top - only Clear All for empty lists
         const controls = document.createElement('li');
         controls.classList.add('participant-controls');
         controls.innerHTML = `
             <button id="clear-participants" class="btn mini danger">Clear All</button>
-            <button id="load-all-participants" class="btn mini secondary">Load All Participants</button>
         `;
         participantList.appendChild(controls);
         
@@ -384,11 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('clear-participants').addEventListener('click', function(e) {
             e.stopPropagation();
             clearParticipantsList();
-        });
-        
-        document.getElementById('load-all-participants').addEventListener('click', function(e) {
-            e.stopPropagation();
-            loadParticipants();
         });
     }
     
