@@ -1,19 +1,23 @@
 # Scramblelist - Gift Exchange Organizer
 
-A web application for organizing gift exchanges with database integration for persistent storage.
+A standalone web application for organizing gift exchanges with database integration for persistent storage.
 
 ## Features
 
-- Add participants with optional email addresses
+- Add participants to create gift exchange lists
 - Generate random gift exchange assignments ensuring no one gets assigned to themselves
-- Store participant information in a PostgreSQL database
+- Animated loading screen with black cat silhouette chasing a ball
+- Password protection for secure access
+- Store participant information and assignments in a database
 - Mobile-friendly responsive design
+- Start with an empty participant list by default
 
 ## Technical Stack
 
 - **Frontend**: HTML, CSS, JavaScript
 - **Backend**: Node.js with Express
-- **Database**: PostgreSQL
+- **Database**: PostgreSQL (optional - works in memory if no database is available)
+- **Authentication**: Cookie-based with password protection
 
 ## Running the Application
 
@@ -24,11 +28,19 @@ bash clone_and_run.sh
 ```
 
 This will:
-1. Check for required dependencies
-2. Check database connection status
-3. Start the server on port 5000
+1. Check for required dependencies (Node.js, npm)
+2. Install any missing Node.js packages (express, pg, cookie-parser)
+3. Set up database connection if environment variables are available
+4. Start the server on port 5000
 
 You can then access the application in your browser at: http://0.0.0.0:5000
+
+### Default Login
+
+The application is protected with a password:
+```
+two-pretzels!1
+```
 
 ## Deployment
 

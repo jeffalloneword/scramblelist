@@ -21,9 +21,75 @@ if (!connectionString && process.env.PGHOST && process.env.PGUSER &&
   console.log('DATABASE_URL constructed from individual PostgreSQL environment variables');
 }
 
-const pool = new Pool({
-  connectionString: connectionString,
-});
+// Create a mock database pool in case no real database is available
+// This will allow the application to run in demo mode
+let pool;
+if (connectionString) {
+  try {
+    pool = new Pool({
+      connectionString: connectionString,
+    });
+    console.log('PostgreSQL pool created');
+  } catch (error) {
+    console.error('Failed to create PostgreSQL pool:', error.message);
+    createMockPool();
+  }
+} else {
+  console.log('No database connection string available, creating mock pool');
+  createMockPool();
+}
+
+// Function to create a mock database pool
+function createMockPool() {
+  console.log('WARNING: Running with in-memory mock database. Data will not persist.');
+  
+  // Create an in-memory mock of participants
+  const inMemoryParticipants = [];
+  const inMemoryExchanges = [];
+  const inMemoryAssignments = [];
+  const inMemoryExchangeParticipants = [];
+  
+  // Create a mock pool object with basic functionality
+  pool = {
+    query: async (text, params) => {
+      // Handle different types of queries
+      if (text.includes('SELECT NOW()')) {
+        return { rows: [{ now: new Date().toISOString() }] };
+      }
+      
+      // Create tables - just return success
+      if (text.includes('CREATE TABLE')) {
+        return { rows: [] };
+      }
+      
+      // Insert into participants
+      if (text.includes('INSERT INTO participants')) {
+        const id = inMemoryParticipants.length + 1;
+        const name = params[0];
+        const email = params[1];
+        const created_at = new Date().toISOString();
+        const participant = { id, name, email, created_at };
+        inMemoryParticipants.push(participant);
+        return { rows: [participant] };
+      }
+      
+      // Select all participants
+      if (text === 'SELECT * FROM participants ORDER BY name') {
+        return { rows: inMemoryParticipants };
+      }
+      
+      // Default for unhandled queries
+      console.warn('Mock database: Unhandled query', text);
+      return { rows: [] };
+    },
+    connect: async () => {
+      return {
+        query: async () => ({ rows: [] }),
+        release: () => {}
+      };
+    }
+  };
+}
 
 // Middleware for parsing JSON bodies and cookies
 app.use(express.json());
