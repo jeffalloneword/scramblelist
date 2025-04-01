@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const dbStatus = document.getElementById('database-status');
     const spinnerOverlay = document.getElementById('spinner-overlay');
     
+    // Make sure spinner is hidden on page load
+    spinnerOverlay.classList.add('hidden');
+    
     // Check database connection
     checkDatabaseConnection();
     
