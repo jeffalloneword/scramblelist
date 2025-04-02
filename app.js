@@ -104,6 +104,8 @@ app.use(express.static(path.join(__dirname, 'public'), {
 
 // Authentication middleware using cookies
 const authenticate = (req, res, next) => {
+  console.log("Auth check - Path:", req.path);
+  
   // Check if this is public resource that doesn't need authentication
   if (
     req.path === '/auth/login' || 
@@ -114,21 +116,27 @@ const authenticate = (req, res, next) => {
     req.path === '/' || 
     req.path === '/styles.css'
   ) {
+    console.log("Public path, no auth needed");
     return next();
   }
   
   // Check the auth cookie
   const isAuthenticated = req.cookies && req.cookies.authenticated === 'true';
+  console.log("Auth check - Is authenticated:", isAuthenticated);
+  console.log("Auth check - Cookies:", req.cookies);
   
   if (!isAuthenticated) {
     // For API calls, return JSON error
     if (req.path.startsWith('/api/')) {
+      console.log("Unauthorized API access attempt");
       return res.status(401).json({ error: 'Unauthorized' });
     }
     // For other resources, redirect to login page
+    console.log("Redirecting to login page");
     return res.redirect('/');
   }
   
+  console.log("User is authenticated, proceeding");
   next();
 };
 
@@ -385,12 +393,18 @@ app.post('/auth/login-simple', (req, res) => {
     // Set a cookie that will be used to authenticate the user
     res.cookie('authenticated', 'true', { 
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax', // Help with cross-site issues
+      path: '/' // Ensure cookie is available for all paths
     });
+    
+    console.log('Setting authentication cookie and redirecting to /app');
     
     // Redirect to the application page
     return res.redirect('/app');
   } else {
+    console.log('Invalid password attempt');
+    
     // Show an error message
     return res.status(401).send(`
       <html>
@@ -423,17 +437,23 @@ app.post('/auth/login', (req, res) => {
   const providedHash = crypto.createHash('sha256').update(password).digest('hex');
   
   if (providedHash === CORRECT_PASSWORD_HASH) {
-    // Set the authentication cookie
+    // Set the authentication cookie with improved settings
     res.cookie('authenticated', 'true', { 
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax', // Help with cross-site issues
+      path: '/' // Ensure cookie is available for all paths
     });
+    
+    console.log('API login successful - authentication cookie set');
     
     // Return success
     return res.json({ 
       success: true
     });
   } else {
+    console.log('API login failed - invalid password');
+    
     // Return error for incorrect password
     return res.status(401).json({ 
       error: 'Invalid password' 
