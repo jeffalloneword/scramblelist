@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Scramblelist Application Startup Script
+# Scramblelist Application Startup Script for Replit Deployment
 # A simple script to start the application without any external dependencies
 
 echo "=== Starting Scramblelist Gift Exchange Organizer ==="
@@ -14,6 +14,9 @@ else
   echo "Database configuration detected."
 fi
 
-# Start the application
+# Make sure we're using the correct port for Replit
+export PORT=5000
+
+# Start the application with proper error handling
 echo "Starting application server..."
-node app.js
+exec node app.js

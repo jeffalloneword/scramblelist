@@ -4,7 +4,8 @@ const path = require('path');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const app = express();
-const port = 5000;
+// Use port from environment variable or default to 5000
+const port = process.env.PORT || 5000;
 
 // Set a secure password - in production this would be in environment variables
 // Using a hardcoded password for simplicity
