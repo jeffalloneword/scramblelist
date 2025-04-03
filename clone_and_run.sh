@@ -4,6 +4,12 @@
 # A standalone gift exchange organizer
 # Enhanced for Replit Deployments
 
+# Set environment variables (replace with your actual variables)
+export DATABASE_URL="your_database_url"
+export API_KEY="your_api_key"
+export OTHER_VARIABLE="your_other_variable"
+
+
 echo "=== Scramblelist Deployment Runner ==="
 echo "Starting Scramblelist Gift Exchange application for deployment"
 
@@ -16,21 +22,21 @@ ls -la
 if [ -f "start.sh" ]; then
   echo "Making start.sh executable..."
   chmod +x start.sh
-  
+
   echo "Using universal starter script..."
   exec ./start.sh
 else
   echo "start.sh not found, using fallback method..."
-  
+
   # Ensure packages are installed
   if [ ! -d "node_modules" ] || [ ! -d "node_modules/express" ]; then
     echo "Installing required packages..."
     npm install
   fi
-  
+
   # Set port for Replit compatibility
   export PORT=5000
-  
+
   # Check if deploy.js exists
   if [ -f "deploy.js" ]; then
     echo "Using deployment script..."
