@@ -117,7 +117,8 @@ app.use(express.static(path.join(__dirname, 'public'), {
   index: 'login-simple.html',
 }));
 
-// Authentication middleware using sessions, cookies, and URL tokens
+// Authentication middleware using a much simpler approach
+// that works even in environments that block cookies/sessions
 const authenticate = (req, res, next) => {
   console.log("Auth check - Path:", req.path);
   
@@ -135,32 +136,39 @@ const authenticate = (req, res, next) => {
     return next();
   }
   
-  // Check authentication methods
-  const isAuthenticatedByCookie = req.cookies && req.cookies.authenticated === 'true';
+  // Get token from URL query parameter
+  const urlToken = req.query.token;
+  
+  // Check session auth
   const isAuthenticatedBySession = req.session && req.session.authenticated === true;
   
-  // Check URL token authentication
+  // Check cookie auth
+  const isAuthenticatedByCookie = req.cookies && req.cookies.authenticated === 'true';
+  
+  // Check token auth
   let isAuthenticatedByToken = false;
-  const authToken = req.query.token;
-  if (authToken && authTokens.has(authToken)) {
-    const tokenData = authTokens.get(authToken);
+  if (urlToken && authTokens.has(urlToken)) {
+    const tokenData = authTokens.get(urlToken);
     if (tokenData && tokenData.expires > Date.now()) {
       isAuthenticatedByToken = true;
-      console.log("Auth check - Valid token in URL");
-    } else if (tokenData) {
-      // Expired token, remove it
-      authTokens.delete(authToken);
-      console.log("Auth check - Token expired, removed");
     }
   }
   
-  const isAuthenticated = isAuthenticatedByCookie || isAuthenticatedBySession || isAuthenticatedByToken;
+  // For API endpoints, also check for the global token that might be stored in a closure
+  let isAuthenticatedByGlobalToken = false;
+  if (req.path.startsWith('/api/') && global.authToken && authTokens.has(global.authToken)) {
+    const tokenData = authTokens.get(global.authToken);
+    if (tokenData && tokenData.expires > Date.now()) {
+      isAuthenticatedByGlobalToken = true;
+    }
+  }
   
-  console.log("Auth check - Cookie auth:", isAuthenticatedByCookie);
-  console.log("Auth check - Session auth:", isAuthenticatedBySession);
-  console.log("Auth check - Token auth:", isAuthenticatedByToken);
-  console.log("Auth check - Cookies:", req.cookies);
-  console.log("Auth check - Session:", req.session);
+  // Combine all authentication methods
+  const isAuthenticated = isAuthenticatedBySession || isAuthenticatedByCookie || 
+                          isAuthenticatedByToken || isAuthenticatedByGlobalToken;
+  
+  console.log(`Auth methods - Session: ${isAuthenticatedBySession}, Cookie: ${isAuthenticatedByCookie}, ` +
+              `Token: ${isAuthenticatedByToken}, Global: ${isAuthenticatedByGlobalToken}`);
   
   if (!isAuthenticated) {
     // For API calls, return JSON error
@@ -168,15 +176,30 @@ const authenticate = (req, res, next) => {
       console.log("Unauthorized API access attempt");
       return res.status(401).json({ error: 'Unauthorized' });
     }
+    
     // For other resources, redirect to login page
-    console.log("Redirecting to login page");
+    console.log("Not authenticated, redirecting to login page");
     return res.redirect('/');
   }
   
-  // If authenticated by token but not by session, update session
-  if ((isAuthenticatedByToken || isAuthenticatedByCookie) && !isAuthenticatedBySession && req.session) {
+  // If authenticated by token but not by session, update session if possible
+  if (!isAuthenticatedBySession && req.session) {
     req.session.authenticated = true;
-    console.log("Updated session with authentication from token/cookie");
+    
+    // Also set cookie as a backup
+    res.cookie('authenticated', 'true', { 
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax',
+      path: '/'
+    });
+    
+    console.log("Updated session and cookie from token authentication");
+  }
+  
+  // For successful token-based authentication, store the token globally for API calls
+  if (isAuthenticatedByToken && urlToken) {
+    global.authToken = urlToken;
   }
   
   console.log("User is authenticated, proceeding");
@@ -497,7 +520,7 @@ app.post('/auth/login', (req, res) => {
   // Hash the provided password and compare with the correct hash
   const providedHash = crypto.createHash('sha256').update(password).digest('hex');
   
-  if (providedHash === CORRECT_PASSWORD_HASH) {
+  if (providedHash === CORRECT_PASSWORD_HASH || password === CORRECT_PASSWORD) {
     // Set authentication in session
     req.session.authenticated = true;
     
@@ -509,11 +532,23 @@ app.post('/auth/login', (req, res) => {
       path: '/' // Ensure cookie is available for all paths
     });
     
-    console.log('API login successful - session and cookie authentication set');
+    // Generate a token for URL-based authentication (fallback)
+    const authToken = generateAuthToken();
+    authTokens.set(authToken, {
+      created: Date.now(),
+      expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+    });
     
-    // Return success
+    // Store the token globally for API usage
+    global.authToken = authToken;
+    
+    console.log('API login successful - session, cookie and token authentication set');
+    
+    // Return success with the token
     return res.json({ 
-      success: true
+      success: true,
+      token: authToken,
+      redirectTo: `/app?token=${authToken}`
     });
   } else {
     console.log('API login failed - invalid password');
@@ -580,50 +615,14 @@ app.get('/app', (req, res) => {
       console.log('Updated session authentication from token/cookie');
     }
     
-    // For token authentication, we want to maintain the token in the URL if using index.html directly
-    if (isAuthenticatedByToken && authToken) {
-      // We need to preserve the token in the page, so we'll do this with a custom HTML response
-      console.log('Sending HTML with token embedded');
-      
-      // Create HTML with tokens preserved in all links
-      return res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Scramblelist - Gift Exchange List Generator</title>
-          <link rel="stylesheet" href="/styles.css">
-          <script>
-            // Preserve token in all links
-            window.addEventListener('DOMContentLoaded', () => {
-              const token = '${authToken}';
-              const links = document.querySelectorAll('a');
-              links.forEach(link => {
-                if (link.href.indexOf('?') === -1) {
-                  link.href = link.href + '?token=' + token;
-                } else {
-                  link.href = link.href + '&token=' + token;
-                }
-              });
-              
-              // Add token to form submissions
-              const forms = document.querySelectorAll('form');
-              forms.forEach(form => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'token';
-                input.value = token;
-                form.appendChild(input);
-              });
-            });
-          </script>
-        </head>
-        <body>
-          <iframe src="/index.html?token=${authToken}" style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;"></iframe>
-        </body>
-        </html>
-      `);
+    // Instead of trying complex iframe approaches, just send the file and handle 
+    // tokens in the scripts.js file which already exists
+    console.log('Sending index.html file directly');
+    
+    // Store authToken in globalAuthToken to be accessible without URL params
+    if (authToken) {
+      global.authToken = authToken;
+      console.log('Global auth token set for API use');
     }
     
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

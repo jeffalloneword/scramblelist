@@ -162,5 +162,75 @@
             <div id="error-message" class="error-message">Incorrect password. Please try again.</div>
         </form>
     </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check URL parameters for token
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        // If we have a token, verify it's valid and redirect
+        if (token) {
+            fetch(`/api/health?token=${token}`)
+            .then(response => {
+                if (response.ok) {
+                    // It worked - so the token is valid! Store it in session and redirect
+                    sessionStorage.setItem('authToken', token);
+                    sessionStorage.setItem('authenticated', 'true');
+                    window.location.href = `/app?token=${token}`;
+                }
+            })
+            .catch(err => {
+                console.error('Token validation failed:', err);
+            });
+        }
+        
+        // Also check if we already have auth in session storage
+        const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
+        const authToken = sessionStorage.getItem('authToken');
+        
+        if (isAuthenticated && authToken) {
+            // We're already authenticated, try to use stored token
+            window.location.href = `/app?token=${authToken}`;
+        }
+        
+        // Add event listener for API-based login (alternative to form submit)
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            // Try API login as well as form submission
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            
+            fetch('/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.token) {
+                    // Store the token and auth state
+                    sessionStorage.setItem('authToken', data.token);
+                    sessionStorage.setItem('authenticated', 'true');
+                    
+                    // Redirect with token
+                    window.location.href = data.redirectTo || `/app?token=${data.token}`;
+                } else {
+                    // Fallback to traditional form submit
+                    document.getElementById('login-form').submit();
+                }
+            })
+            .catch(err => {
+                console.error('API login failed, using form submission', err);
+                // Fallback to traditional form submit
+                document.getElementById('login-form').submit();
+            });
+        });
+    });
+    </script>
 </body>
 </html>

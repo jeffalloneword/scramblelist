@@ -1,10 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Check authentication
-    const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
-    const authToken = sessionStorage.getItem('authToken');
+    // Check for URL token first
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+    
+    // If we have a URL token, save it
+    if (urlToken) {
+        console.log("Got token from URL:", urlToken.substring(0, 6) + "...");
+        sessionStorage.setItem('authToken', urlToken);
+    }
+    
+    // Check all authentication methods
+    const isAuthenticatedByStorage = sessionStorage.getItem('authenticated') === 'true';
+    const authToken = sessionStorage.getItem('authToken') || urlToken;
+    const isAuthenticated = isAuthenticatedByStorage || !!authToken;
+    
+    // If we have a token but not marked as authenticated, set it
+    if (authToken && !isAuthenticatedByStorage) {
+        sessionStorage.setItem('authenticated', 'true');
+    }
 
     console.log("Auth check - Path:", window.location.pathname);
     console.log("Auth check - Is authenticated:", isAuthenticated);
+    console.log("Auth check - Have token:", !!authToken);
     
     // If not on the login page and not authenticated, redirect to login
     if (window.location.pathname !== '/' && 
@@ -39,16 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 options.headers = plainHeaders;
             }
             
-            // Add the Authorization header to the options
-            const authOptions = {
-                ...options,
-                headers: {
-                    ...options.headers,
-                    'Authorization': `Bearer ${authToken}`
-                }
-            };
+            // Add the token as a URL parameter for API calls rather than as a header
+            let modifiedUrl = url;
+            if (url.includes('/api/')) {
+                const separator = url.includes('?') ? '&' : '?';
+                modifiedUrl = `${url}${separator}token=${authToken}`;
+            }
             
-            return originalFetch(url, authOptions);
+            return originalFetch(modifiedUrl, options);
         };
     }
 
