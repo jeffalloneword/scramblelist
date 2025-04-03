@@ -98,16 +98,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Set up express-session for authentication
+// Set up express-session for authentication with more permissive settings
 app.use(session({
   secret: 'scramblelist-session-secret', // Secret used to sign the session ID cookie
-  resave: false, // Force the session to be saved back to the session store
-  saveUninitialized: false, // Don't save uninitialized sessions
+  resave: true, // Force session to be saved
+  saveUninitialized: true, // Save uninitialized sessions
   cookie: {
     httpOnly: true, // Prevent client-side JS from reading the cookie
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax', // Cross-site cookie security
-    path: '/' // Ensure cookie is available for all paths
+    path: '/', // Ensure cookie is available for all paths
+    secure: false, // Don't require HTTPS
+    sameSite: 'none' // Remove cross-site restrictions
   }
 }));
 
@@ -116,7 +117,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
   index: 'login-simple.html',
 }));
 
-// Authentication middleware using sessions
+// Authentication middleware using sessions, cookies, and URL tokens
 const authenticate = (req, res, next) => {
   console.log("Auth check - Path:", req.path);
   
@@ -134,13 +135,30 @@ const authenticate = (req, res, next) => {
     return next();
   }
   
-  // Check the auth in session
+  // Check authentication methods
   const isAuthenticatedByCookie = req.cookies && req.cookies.authenticated === 'true';
   const isAuthenticatedBySession = req.session && req.session.authenticated === true;
-  const isAuthenticated = isAuthenticatedByCookie || isAuthenticatedBySession;
   
-  console.log("Auth check - Is authenticated (cookie):", isAuthenticatedByCookie);
-  console.log("Auth check - Is authenticated (session):", isAuthenticatedBySession);
+  // Check URL token authentication
+  let isAuthenticatedByToken = false;
+  const authToken = req.query.token;
+  if (authToken && authTokens.has(authToken)) {
+    const tokenData = authTokens.get(authToken);
+    if (tokenData && tokenData.expires > Date.now()) {
+      isAuthenticatedByToken = true;
+      console.log("Auth check - Valid token in URL");
+    } else if (tokenData) {
+      // Expired token, remove it
+      authTokens.delete(authToken);
+      console.log("Auth check - Token expired, removed");
+    }
+  }
+  
+  const isAuthenticated = isAuthenticatedByCookie || isAuthenticatedBySession || isAuthenticatedByToken;
+  
+  console.log("Auth check - Cookie auth:", isAuthenticatedByCookie);
+  console.log("Auth check - Session auth:", isAuthenticatedBySession);
+  console.log("Auth check - Token auth:", isAuthenticatedByToken);
   console.log("Auth check - Cookies:", req.cookies);
   console.log("Auth check - Session:", req.session);
   
@@ -155,11 +173,10 @@ const authenticate = (req, res, next) => {
     return res.redirect('/');
   }
   
-  // If the user was authenticated by cookie but not by session, 
-  // let's update their session for future use
-  if (isAuthenticatedByCookie && !isAuthenticatedBySession) {
+  // If authenticated by token but not by session, update session
+  if ((isAuthenticatedByToken || isAuthenticatedByCookie) && !isAuthenticatedBySession && req.session) {
     req.session.authenticated = true;
-    console.log("Updated session with authentication");
+    console.log("Updated session with authentication from token/cookie");
   }
   
   console.log("User is authenticated, proceeding");
@@ -409,6 +426,14 @@ app.get('/api/exchanges/:id', async (req, res) => {
   }
 });
 
+// Generate a unique authentication token
+const generateAuthToken = () => {
+  return crypto.randomBytes(16).toString('hex');
+};
+
+// Store for auth tokens with expiration
+const authTokens = new Map();
+
 // Simple form-based login handler - used by the simple login form
 app.post('/auth/login-simple', (req, res) => {
   const { password } = req.body;
@@ -427,10 +452,17 @@ app.post('/auth/login-simple', (req, res) => {
       path: '/' // Ensure cookie is available for all paths
     });
     
-    console.log('Setting authentication in session and cookie, redirecting to /app');
+    // Generate a token for URL-based authentication (fallback)
+    const authToken = generateAuthToken();
+    authTokens.set(authToken, {
+      created: Date.now(),
+      expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+    });
     
-    // Redirect to the application page
-    return res.redirect('/app');
+    console.log('Setting authentication in session and cookie, redirecting to /app with token');
+    
+    // Redirect to the application page with token in URL
+    return res.redirect(`/app?token=${authToken}`);
   } else {
     console.log('Invalid password attempt');
     
@@ -516,18 +548,82 @@ app.get('/logout', (req, res) => {
 
 // Protected main app page
 app.get('/app', (req, res) => {
+  // Check all authentication methods
   const isAuthenticatedByCookie = req.cookies && req.cookies.authenticated === 'true';
   const isAuthenticatedBySession = req.session && req.session.authenticated === true;
-  const isAuthenticated = isAuthenticatedByCookie || isAuthenticatedBySession;
+  
+  // Check URL token authentication
+  let isAuthenticatedByToken = false;
+  const authToken = req.query.token;
+  if (authToken && authTokens.has(authToken)) {
+    const tokenData = authTokens.get(authToken);
+    if (tokenData && tokenData.expires > Date.now()) {
+      isAuthenticatedByToken = true;
+      console.log("App route - Valid token in URL:", authToken);
+    } else if (tokenData) {
+      // Expired token, remove it
+      authTokens.delete(authToken);
+      console.log("App route - Token expired, removed");
+    }
+  }
+  
+  const isAuthenticated = isAuthenticatedByCookie || isAuthenticatedBySession || isAuthenticatedByToken;
   
   console.log('App route - Cookie auth:', isAuthenticatedByCookie);
   console.log('App route - Session auth:', isAuthenticatedBySession);
+  console.log('App route - Token auth:', isAuthenticatedByToken);
   
   if (isAuthenticated) {
-    // If authenticated by cookie but not session, store in session for future
-    if (isAuthenticatedByCookie && !isAuthenticatedBySession && req.session) {
+    // If authenticated by token or cookie but not session, store in session for future
+    if ((isAuthenticatedByToken || isAuthenticatedByCookie) && !isAuthenticatedBySession && req.session) {
       req.session.authenticated = true;
-      console.log('Updated session authentication from cookie');
+      console.log('Updated session authentication from token/cookie');
+    }
+    
+    // For token authentication, we want to maintain the token in the URL if using index.html directly
+    if (isAuthenticatedByToken && authToken) {
+      // We need to preserve the token in the page, so we'll do this with a custom HTML response
+      console.log('Sending HTML with token embedded');
+      
+      // Create HTML with tokens preserved in all links
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Scramblelist - Gift Exchange List Generator</title>
+          <link rel="stylesheet" href="/styles.css">
+          <script>
+            // Preserve token in all links
+            window.addEventListener('DOMContentLoaded', () => {
+              const token = '${authToken}';
+              const links = document.querySelectorAll('a');
+              links.forEach(link => {
+                if (link.href.indexOf('?') === -1) {
+                  link.href = link.href + '?token=' + token;
+                } else {
+                  link.href = link.href + '&token=' + token;
+                }
+              });
+              
+              // Add token to form submissions
+              const forms = document.querySelectorAll('form');
+              forms.forEach(form => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'token';
+                input.value = token;
+                form.appendChild(input);
+              });
+            });
+          </script>
+        </head>
+        <body>
+          <iframe src="/index.html?token=${authToken}" style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;"></iframe>
+        </body>
+        </html>
+      `);
     }
     
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -539,13 +635,31 @@ app.get('/app', (req, res) => {
 
 // HTML for the login page (root)
 app.get('/', (req, res) => {
-  // If already authenticated, redirect to the app
+  // Check all authentication methods
   const isAuthenticatedByCookie = req.cookies && req.cookies.authenticated === 'true';
   const isAuthenticatedBySession = req.session && req.session.authenticated === true;
-  const isAuthenticated = isAuthenticatedByCookie || isAuthenticatedBySession;
+  
+  // Check URL token authentication
+  let isAuthenticatedByToken = false;
+  const authToken = req.query.token;
+  if (authToken && authTokens.has(authToken)) {
+    const tokenData = authTokens.get(authToken);
+    if (tokenData && tokenData.expires > Date.now()) {
+      isAuthenticatedByToken = true;
+      console.log("Root route - Valid token in URL");
+    }
+  }
+  
+  const isAuthenticated = isAuthenticatedByCookie || isAuthenticatedBySession || isAuthenticatedByToken;
   
   if (isAuthenticated) {
     console.log('Root route - Already authenticated, redirecting to app');
+    
+    // If authenticated by token, preserve the token in the redirect
+    if (isAuthenticatedByToken && authToken) {
+      return res.redirect(`/app?token=${authToken}`);
+    }
+    
     return res.redirect('/app');
   }
   
