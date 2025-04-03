@@ -50,8 +50,11 @@ args = "bash clone_and_run.sh"
 waitForPort = 5000
 
 [deployment]
-run = ["sh", "-c", "node app.js"]
+run = ["sh", "-c", "node deploy.js"]
 build = ["sh", "-c", "npm install"]
+
+[env]
+REPLIT_DISABLE_PACKAGE_LAYER = "1"
 
 [[ports]]
 localPort = 5000
