@@ -100,9 +100,9 @@ app.use(cookieParser());
 
 // Set up express-session for authentication with more permissive settings
 app.use(session({
-  secret: 'scramblelist-session-secret', // Secret used to sign the session ID cookie
-  resave: true, // Force session to be saved
-  saveUninitialized: true, // Save uninitialized sessions
+  secret: process.env.SESSION_SECRET || 'scramblelist-session-secret',
+  resave: true,
+  saveUninitialized: true,
   cookie: {
     httpOnly: true, // Prevent client-side JS from reading the cookie
     maxAge: 24 * 60 * 60 * 1000, // 24 hours

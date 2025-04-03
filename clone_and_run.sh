@@ -1,15 +1,7 @@
+
 #!/bin/bash
 
 # Scramblelist Application Runner for Deployments
-# A standalone gift exchange organizer
-# Enhanced for Replit Deployments
-
-# Set environment variables (replace with your actual variables)
-export DATABASE_URL="your_database_url"
-export API_KEY="your_api_key"
-export OTHER_VARIABLE="your_other_variable"
-
-
 echo "=== Scramblelist Deployment Runner ==="
 echo "Starting Scramblelist Gift Exchange application for deployment"
 
@@ -22,7 +14,6 @@ ls -la
 if [ -f "start.sh" ]; then
   echo "Making start.sh executable..."
   chmod +x start.sh
-
   echo "Using universal starter script..."
   exec ./start.sh
 else
