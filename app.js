@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 const path = require('path');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
+const session = require('express-session');
 const app = express();
 // Use port from environment variable or default to 5000
 const port = process.env.PORT || 5000;
@@ -97,12 +98,25 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Set up express-session for authentication
+app.use(session({
+  secret: 'scramblelist-session-secret', // Secret used to sign the session ID cookie
+  resave: false, // Force the session to be saved back to the session store
+  saveUninitialized: false, // Don't save uninitialized sessions
+  cookie: {
+    httpOnly: true, // Prevent client-side JS from reading the cookie
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax', // Cross-site cookie security
+    path: '/' // Ensure cookie is available for all paths
+  }
+}));
+
 // Serve static files with login-simple as the default page
 app.use(express.static(path.join(__dirname, 'public'), {
   index: 'login-simple.html',
 }));
 
-// Authentication middleware using cookies
+// Authentication middleware using sessions
 const authenticate = (req, res, next) => {
   console.log("Auth check - Path:", req.path);
   
@@ -120,10 +134,15 @@ const authenticate = (req, res, next) => {
     return next();
   }
   
-  // Check the auth cookie
-  const isAuthenticated = req.cookies && req.cookies.authenticated === 'true';
-  console.log("Auth check - Is authenticated:", isAuthenticated);
+  // Check the auth in session
+  const isAuthenticatedByCookie = req.cookies && req.cookies.authenticated === 'true';
+  const isAuthenticatedBySession = req.session && req.session.authenticated === true;
+  const isAuthenticated = isAuthenticatedByCookie || isAuthenticatedBySession;
+  
+  console.log("Auth check - Is authenticated (cookie):", isAuthenticatedByCookie);
+  console.log("Auth check - Is authenticated (session):", isAuthenticatedBySession);
   console.log("Auth check - Cookies:", req.cookies);
+  console.log("Auth check - Session:", req.session);
   
   if (!isAuthenticated) {
     // For API calls, return JSON error
@@ -134,6 +153,13 @@ const authenticate = (req, res, next) => {
     // For other resources, redirect to login page
     console.log("Redirecting to login page");
     return res.redirect('/');
+  }
+  
+  // If the user was authenticated by cookie but not by session, 
+  // let's update their session for future use
+  if (isAuthenticatedByCookie && !isAuthenticatedBySession) {
+    req.session.authenticated = true;
+    console.log("Updated session with authentication");
   }
   
   console.log("User is authenticated, proceeding");
@@ -390,7 +416,10 @@ app.post('/auth/login-simple', (req, res) => {
   console.log('Login attempt with password');
   
   if (password === CORRECT_PASSWORD) {
-    // Set a cookie that will be used to authenticate the user
+    // Set authentication in session
+    req.session.authenticated = true;
+    
+    // Also set a cookie as a backup authentication method
     res.cookie('authenticated', 'true', { 
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -398,7 +427,7 @@ app.post('/auth/login-simple', (req, res) => {
       path: '/' // Ensure cookie is available for all paths
     });
     
-    console.log('Setting authentication cookie and redirecting to /app');
+    console.log('Setting authentication in session and cookie, redirecting to /app');
     
     // Redirect to the application page
     return res.redirect('/app');
@@ -437,7 +466,10 @@ app.post('/auth/login', (req, res) => {
   const providedHash = crypto.createHash('sha256').update(password).digest('hex');
   
   if (providedHash === CORRECT_PASSWORD_HASH) {
-    // Set the authentication cookie with improved settings
+    // Set authentication in session
+    req.session.authenticated = true;
+    
+    // Also set a cookie as a backup authentication method
     res.cookie('authenticated', 'true', { 
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -445,7 +477,7 @@ app.post('/auth/login', (req, res) => {
       path: '/' // Ensure cookie is available for all paths
     });
     
-    console.log('API login successful - authentication cookie set');
+    console.log('API login successful - session and cookie authentication set');
     
     // Return success
     return res.json({ 
@@ -463,15 +495,44 @@ app.post('/auth/login', (req, res) => {
 
 // Route to log out the user
 app.get('/logout', (req, res) => {
-  res.clearCookie('authenticated');
+  // Clear cookie with the same settings it was set with to ensure proper removal
+  res.clearCookie('authenticated', { 
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/'
+  });
+  
+  // Clear the session
+  if (req.session) {
+    req.session.authenticated = false;
+    req.session.destroy(err => {
+      if (err) console.error('Error destroying session:', err);
+    });
+  }
+  
+  console.log('Logging out user, cleared authentication cookie and session');
   res.redirect('/');
 });
 
 // Protected main app page
 app.get('/app', (req, res) => {
-  if (req.cookies && req.cookies.authenticated === 'true') {
+  const isAuthenticatedByCookie = req.cookies && req.cookies.authenticated === 'true';
+  const isAuthenticatedBySession = req.session && req.session.authenticated === true;
+  const isAuthenticated = isAuthenticatedByCookie || isAuthenticatedBySession;
+  
+  console.log('App route - Cookie auth:', isAuthenticatedByCookie);
+  console.log('App route - Session auth:', isAuthenticatedBySession);
+  
+  if (isAuthenticated) {
+    // If authenticated by cookie but not session, store in session for future
+    if (isAuthenticatedByCookie && !isAuthenticatedBySession && req.session) {
+      req.session.authenticated = true;
+      console.log('Updated session authentication from cookie');
+    }
+    
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   } else {
+    console.log('Not authenticated, redirecting to login');
     res.redirect('/');
   }
 });
@@ -479,9 +540,16 @@ app.get('/app', (req, res) => {
 // HTML for the login page (root)
 app.get('/', (req, res) => {
   // If already authenticated, redirect to the app
-  if (req.cookies && req.cookies.authenticated === 'true') {
+  const isAuthenticatedByCookie = req.cookies && req.cookies.authenticated === 'true';
+  const isAuthenticatedBySession = req.session && req.session.authenticated === true;
+  const isAuthenticated = isAuthenticatedByCookie || isAuthenticatedBySession;
+  
+  if (isAuthenticated) {
+    console.log('Root route - Already authenticated, redirecting to app');
     return res.redirect('/app');
   }
+  
+  console.log('Root route - Not authenticated, showing login page');
   res.sendFile(path.join(__dirname, 'public', 'login-simple.html'));
 });
 
