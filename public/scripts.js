@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsTitle = document.getElementById('results-title');
     const dbStatus = document.getElementById('database-status');
     const spinnerOverlay = document.getElementById('spinner-overlay');
-    const pastExchangesContainer = document.getElementById('past-exchanges-container');
+
     
     // Make sure spinner is hidden on page load
     if (spinnerOverlay) {
@@ -103,9 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Initialize the participants table and only load past exchanges initially
         setupDatabase().then(() => {
-            // Don't automatically load participants - only load exchanges
-            // They'll be able to add participants or load a previous exchange
-            loadPastExchanges();
+            // Initialize with empty participant list
+            // No past exchanges functionality
             
             // Show empty list with control buttons
             clearParticipantsList();
@@ -283,9 +282,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Scroll to results
             resultsSection.scrollIntoView({ behavior: 'smooth' });
-            
-            // Update the past exchanges list
-            loadPastExchanges();
         } catch (error) {
             // Hide the spinner in case of error
             spinnerOverlay.classList.add('hidden');
@@ -359,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add empty message
         const emptyMessage = document.createElement('li');
         emptyMessage.classList.add('empty-message');
-        emptyMessage.textContent = 'No participants added yet. Add participants above or select a previous exchange.';
+        emptyMessage.textContent = 'No participants added yet. Add participants above.';
         participantList.appendChild(emptyMessage);
         
         // Add event listeners for the control buttons
