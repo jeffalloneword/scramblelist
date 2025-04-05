@@ -18,6 +18,6 @@ app.get('/results', (req, res) => {
 
 // Start the server
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Scramblelist app listening at http://0.0.0.0:${port}`);
+  console.log(`Listerical! app listening at http://0.0.0.0:${port}`);
   console.log(`Access it at http://localhost:${port}`);
 });
