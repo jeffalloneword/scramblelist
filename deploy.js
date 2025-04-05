@@ -14,7 +14,7 @@ console.log('Current directory:', process.cwd());
 console.log('Environment:', process.env.NODE_ENV || 'development');
 
 // Make sure required files exist
-const requiredFiles = ['app.js', 'public/index.html', 'public/login-simple.html', 'public/styles.css'];
+const requiredFiles = ['app.js', 'public/index.html', 'public/styles.css'];
 let allFilesExist = true;
 
 for (const file of requiredFiles) {
