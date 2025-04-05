@@ -46,8 +46,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash clone_and_run.sh"
-waitForPort = 5000
+args = "node deploy.js"
 
 [deployment]
 run = ["sh", "-c", "node app.js"]

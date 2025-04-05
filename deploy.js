@@ -1,59 +1,103 @@
-// Deployment script for Replit
-// This standalone script is designed to work with Replit deployments
-
-console.log('=== Scramblelist Deployment Script ===');
-
-// Import required modules
-const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
-// Check environment
-console.log('Node version:', process.version);
-console.log('Current directory:', process.cwd());
-console.log('Environment:', process.env.NODE_ENV || 'development');
-
-// Make sure required files exist
-const requiredFiles = ['app.js', 'public/index.html', 'public/styles.css'];
-let allFilesExist = true;
-
-for (const file of requiredFiles) {
-  if (!fs.existsSync(path.join(process.cwd(), file))) {
-    console.error(`ERROR: Required file '${file}' not found!`);
-    allFilesExist = false;
+// Function to create directories
+function ensureDirExists(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+    console.log(`Created directory: ${dirPath}`);
   }
 }
 
-if (!allFilesExist) {
-  console.error('Missing required files. Deployment cannot proceed.');
-  process.exit(1);
+// Function to copy files
+function copyFile(source, target) {
+  try {
+    fs.copyFileSync(source, target);
+    console.log(`Copied: ${source} -> ${target}`);
+  } catch (error) {
+    console.error(`Error copying ${source} to ${target}: ${error.message}`);
+    throw error;
+  }
 }
 
-// Install dependencies if needed
-if (!fs.existsSync(path.join(process.cwd(), 'node_modules/express'))) {
-  console.log('Installing dependencies...');
+// Function to deploy the app
+function deployApp() {
+  console.log('Starting deployment process...');
+  
   try {
-    execSync('npm install', { stdio: 'inherit' });
+    // Create necessary directories
+    const deployDir = path.join(__dirname, 'deploy');
+    const publicDeployDir = path.join(deployDir, 'public');
+    
+    ensureDirExists(deployDir);
+    ensureDirExists(publicDeployDir);
+    
+    // Copy server files
+    copyFile(
+      path.join(__dirname, 'app.js'),
+      path.join(deployDir, 'app.js')
+    );
+    
+    copyFile(
+      path.join(__dirname, 'package.json'),
+      path.join(deployDir, 'package.json')
+    );
+    
+    // Copy all public files
+    const publicFiles = fs.readdirSync(path.join(__dirname, 'public'));
+    for (const file of publicFiles) {
+      copyFile(
+        path.join(__dirname, 'public', file),
+        path.join(publicDeployDir, file)
+      );
+    }
+    
+    // Create a deployment README
+    const readmeContent = `# Scramblelist Deployment
+
+## About
+This is a deployed version of the Scramblelist gift exchange organizer app.
+
+## Running the app
+1. Navigate to this directory
+2. Run \`npm install\` to install dependencies
+3. Run \`node app.js\` to start the server
+4. Access the app at http://localhost:5000
+
+## Features
+- Add gift exchange participants
+- Generate random gift exchange assignments
+- View assignments on a clean results page
+- Persistent storage using browser localStorage
+`;
+    
+    fs.writeFileSync(path.join(deployDir, 'README.md'), readmeContent);
+    console.log('Created deployment README');
+    
+    // Create a simple start script
+    const startScript = `#!/bin/bash
+echo "Starting Scramblelist app..."
+cd "$(dirname "$0")"
+npm install
+node app.js
+`;
+    
+    fs.writeFileSync(path.join(deployDir, 'start.sh'), startScript);
+    fs.chmodSync(path.join(deployDir, 'start.sh'), '755');
+    console.log('Created start script');
+    
+    console.log('Deployment completed successfully!');
+    console.log(`Deployed to: ${deployDir}`);
+    console.log('To run the deployed app:');
+    console.log('1. Navigate to the deploy directory');
+    console.log('2. Run ./start.sh');
+    
   } catch (error) {
-    console.error('Failed to install dependencies:', error.message);
+    console.error(`Deployment failed: ${error.message}`);
     process.exit(1);
   }
 }
 
-// Check database configuration
-if (!process.env.DATABASE_URL && !process.env.PGHOST) {
-  console.warn('WARNING: No database configuration found. Using in-memory storage.');
-  console.warn('Data will not be persisted between restarts.');
-} else {
-  console.log('Database configuration detected.');
-}
-
-// Start the application
-console.log('Starting server...');
-try {
-  // We use require() here to start the app in the same process
-  require('./app.js');
-} catch (error) {
-  console.error('Failed to start server:', error);
-  process.exit(1);
-}
+// Execute deployment
+deployApp();

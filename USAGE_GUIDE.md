@@ -1,135 +1,72 @@
 # Scramblelist Usage Guide
 
-This guide provides step-by-step instructions on how to use the Scramblelist gift exchange organizer application.
+## Introduction
 
-## Table of Contents
+Scramblelist is a simple and intuitive gift exchange organizer that allows you to create random gift assignments for holiday exchanges, office parties, or any other gift-giving event. This application runs entirely in your browser and uses localStorage to save your data locally, meaning there's no need for user accounts or a database.
 
-1. [Getting Started](#getting-started)
-2. [Logging In](#logging-in)
-3. [Adding Participants](#adding-participants)
-4. [Creating a Gift Exchange](#creating-a-gift-exchange)
-5. [Viewing Exchange Results](#viewing-exchange-results)
-6. [Managing Past Exchanges](#managing-past-exchanges)
-7. [Troubleshooting](#troubleshooting)
+## Key Features
+
+- Add multiple participants to your gift exchange
+- Remove individual participants as needed
+- Create named exchanges with optional descriptions
+- Generate random assignments where no one gets their own name
+- View assignments on a dedicated clean results page
+- Animated black cat loading screen during assignment generation
+- Persistent storage using your browser's localStorage
 
 ## Getting Started
 
-### System Requirements
-
-- Modern web browser (Chrome, Firefox, Safari, Edge)
-- Internet connection
-- Access to the Scramblelist application URL
-
-### Accessing the Application
-
-1. Open your web browser
-2. Navigate to the application URL (usually http://localhost:5000 in local installations)
-3. You will be presented with a login screen
-
-## Logging In
-
-1. On the login screen, enter the password
-   - Default password: `two-pretzels!1`
-2. Click "Login" or press Enter
-3. If the password is correct, you will be redirected to the main application
-4. If incorrect, an error message will appear and you can try again
+1. Open the application in your web browser
+2. Add participants using the "Add Participant" form
+3. Give your exchange a title and optional description
+4. Click "Generate Assignments" to create the exchange
 
 ## Adding Participants
 
-1. In the "Participants" section, locate the "Add Participant" form
-2. Enter the participant's name in the "Name" field
-3. Click the "Add Participant" button
-4. The participant will appear in the "Current Participants" list below
-5. Repeat this process for each participant you want to add
+1. Enter a participant's name in the "Name" field
+2. Click "Add Participant" 
+3. The participant will appear in the "Current Participants" list
+4. Add as many participants as needed (minimum of 2 required)
 
-**Notes:**
-- You need at least 2 participants to create a gift exchange
-- Each participant must have a unique name
-- The participant list starts empty by default
+## Managing Participants
 
-### Managing the Participant List
+- **Remove Individual Participant:** Click the "✕" button next to a participant's name
+- **Clear All Participants:** Click the "Clear All" button at the top of the participants list
 
-- To clear all participants, click the "Clear All" button
-- When viewing participants from a past exchange, you can click "Load All Participants" to load the complete list
+## Creating an Exchange
 
-## Creating a Gift Exchange
+1. Enter an exchange title (required)
+2. Add an optional description for additional details
+3. Make sure you have at least 2 participants added
+4. Click "Generate Assignments"
+5. Wait for the animated black cat to finish chasing the ball (10 seconds)
+6. You'll be redirected to the results page showing assignments
 
-1. After adding participants, navigate to the "Gift Exchange" section
-2. Enter a title for your exchange (e.g., "Holiday Gift Exchange 2025") in the "Exchange Title" field
-3. Optionally, add a description in the "Description" field (e.g., "Annual holiday gift exchange. $25 limit.")
-4. Click the "Generate Assignments" button
-5. The system will display an animated loading screen with a black cat chasing a ball (10 seconds)
-6. Wait for the animation to complete and the assignments to be generated
+## Viewing Results
 
-## Viewing Exchange Results
+The results page displays:
+- Exchange title
+- Exchange description
+- Date and time created
+- Complete list of assignments (who gives to whom)
+- "Back to Home" button to return to the main page
 
-1. After generating assignments, the "Assignment Results" section will appear
-2. This section displays who each person should give a gift to
-3. Each line shows a gift giver and their assigned recipient
-4. These assignments ensure that no one is assigned to give a gift to themselves
-5. The results are automatically saved to the database
+## Technical Information
 
-## Managing Past Exchanges
+- This application uses browser localStorage to store data
+- No data is sent to a server or stored in a database
+- All data is stored locally in your browser
+- Clearing your browser cache or using private browsing will remove saved data
 
-1. The "Past Gift Exchanges" section at the bottom of the page shows all previously created exchanges
-2. Click on an exchange to view its details
-3. The exchange details include:
-   - Exchange title
-   - Date created
-   - Description (if provided)
-   - Number of participants
-   - List of assignments
+## Deployment
 
-### Loading Participants from Past Exchanges
-
-1. Click on a past exchange to select it
-2. The participants from that exchange will load into the "Current Participants" list
-3. A notice will appear indicating you are viewing participants from a selected exchange
-4. You can click "Load All Participants" to load the complete list of all participants
-5. Click "Clear All" to start with an empty list again
+The application can be easily deployed and shared:
+1. Use the built-in deploy.js script to create a deployable package
+2. Copy the files to any web server or hosting service
+3. No database setup required
 
 ## Troubleshooting
 
-### Login Issues
-
-- Ensure you are using the correct password
-- Check for caps lock or typing errors
-- Clear browser cookies and try again
-
-### Database Connection Issues
-
-- If you see database errors, ensure the PostgreSQL database is properly configured
-- Check the database environment variables (DATABASE_URL or individual PostgreSQL variables)
-- The application will still work with limited functionality using in-memory storage if no database is available
-
-### Participant Management
-
-- If you cannot add participants, ensure the name field is not empty
-- If participants are not appearing in the list, refresh the page
-- If you see unexpected behavior with the participant list, try clearing all participants and adding them again
-
-### Exchange Generation
-
-- If you receive an error when generating exchanges, ensure you have at least 2 participants
-- If the loading animation continues indefinitely, refresh the page and try again
-- If assignments are not being saved, check the database connection
-
-## Additional Information
-
-### Data Storage
-
-- All participants and exchanges are stored in a PostgreSQL database
-- If no database is available, data is stored in memory temporarily
-- Data stored in memory will be lost when the server restarts
-
-### Security
-
-- The application is protected with a password
-- Your session is maintained through cookies
-- The session expires after 24 hours of inactivity
-
-### Browser Compatibility
-
-- The application works best with modern browsers
-- If you encounter styling issues, try updating your browser
-- Mobile devices are supported through responsive design
+- **Assignments Not Showing:** Ensure you have at least 2 participants
+- **Data Not Persisting:** Check that localStorage is enabled in your browser
+- **Loading Screen Stuck:** Refresh the page and try again

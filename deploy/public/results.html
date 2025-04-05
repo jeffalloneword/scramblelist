@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scramblelist - Assignment Results</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" class="results-page">
+        <header>
+            <h1>Scramblelist</h1>
+            <p>Gift Exchange Results</p>
+        </header>
+
+        <main>
+            <section id="results-display">
+                <div class="card">
+                    <h2 id="exchange-title">Exchange Title</h2>
+                    <p id="exchange-description" class="results-description">Exchange description will appear here.</p>
+                    
+                    <div class="results-date">
+                        <span id="exchange-date">Date</span>
+                    </div>
+                    
+                    <div class="assignments-container">
+                        <h3>Gift Exchange Assignments</h3>
+                        <ul id="assignments-list"></ul>
+                    </div>
+                    
+                    <div class="buttons-container">
+                        <button id="back-to-home" class="btn secondary">Back to Home</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Scramblelist - Gift Exchange Organizer | Using Browser Local Storage</p>
+            <p id="database-status"></p>
+        </footer>
+    </div>
+
+    <script src="results.js"></script>
+</body>
+</html>
