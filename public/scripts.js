@@ -76,6 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear all participants
         clearParticipants: function() {
             this.saveParticipants([]);
+        },
+        
+        // Remove specific participant by ID
+        removeParticipant: function(participantId) {
+            const participants = this.getParticipants();
+            const filteredParticipants = participants.filter(p => p.id !== participantId);
+            this.saveParticipants(filteredParticipants);
+            return filteredParticipants;
         }
     };
 
@@ -158,10 +166,21 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 participants.forEach(participant => {
                     const li = document.createElement('li');
+                    li.dataset.participantId = participant.id;
                     li.innerHTML = `
                         <span>${participant.name}${participant.email ? ` (${participant.email})` : ''}</span>
+                        <button class="remove-participant btn mini danger">✕</button>
                     `;
                     participantList.appendChild(li);
+                    
+                    // Add event listener for removing this participant
+                    li.querySelector('.remove-participant').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        // Remove this participant by ID
+                        window.storageHelper.removeParticipant(participant.id);
+                        // Reload the participants list to reflect changes
+                        loadParticipants();
+                    });
                 });
             }
             

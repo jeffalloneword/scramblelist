@@ -143,6 +143,21 @@ textarea {
     align-items: center;
 }
 
+#participant-list li .remove-participant {
+    opacity: 0.7;
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    min-width: 28px;
+    min-height: 28px;
+    border-radius: 50%;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+#participant-list li .remove-participant:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
 #participant-list li:last-child {
     border-bottom: none;
 }
@@ -842,4 +857,20 @@ footer {
 @keyframes pawMove {
     0% { height: 6px; }
     100% { height: 4px; }
+}
+
+/* Remove Participant Button Styles */
+#participant-list li .remove-participant {
+    opacity: 0.7;
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    min-width: 28px;
+    min-height: 28px;
+    border-radius: 50%;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+#participant-list li .remove-participant:hover {
+    opacity: 1;
+    transform: scale(1.1);
 }
