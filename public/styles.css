@@ -92,6 +92,15 @@ textarea {
     resize: vertical;
 }
 
+/* Placeholder Styles - Make consistent for inputs and textareas */
+input::placeholder,
+textarea::placeholder {
+    color: #aaa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-style: italic;
+    opacity: 0.8;
+}
+
 /* Button Styles */
 .btn {
     padding: 10px 15px;
@@ -1038,3 +1047,12 @@ footer {
     }
 }
 /* Mobile Optimization Fixes */
+
+/* Placeholder Styles - Make consistent for inputs and textareas */
+input::placeholder,
+textarea::placeholder {
+    color: #aaa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-style: italic;
+    opacity: 0.8;
+}
