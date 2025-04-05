@@ -16,7 +16,7 @@ body {
 }
 
 #app {
-    max-width: 1000px;
+    max-width: 100%; max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
     display: flex;
@@ -705,6 +705,84 @@ footer {
 }
 
 /* Responsive Styles */
+/* Mobile Optimization Fixes */
+@media (max-width: 600px) {
+    #app {
+        padding: 10px;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .card {
+        padding: 15px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .buttons-container {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .buttons-container .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .results-page main {
+        padding: 0 10px;
+        width: 100%;
+    }
+    
+    #assignments-list li {
+        display: block;
+        text-align: center;
+        padding: 15px 10px;
+    }
+    
+    /* Fix for remove participant buttons on mobile */
+    #participant-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    #participant-list li .remove-participant {
+        flex-shrink: 0;
+        width: auto;
+        min-width: 28px;
+        height: 28px;
+        padding: 4px 8px;
+        margin-left: 10px;
+    }
+    
+    /* Fix remove participant button styling */
+    .btn.mini {
+        width: auto;
+        margin-bottom: 0;
+    }
+    
+    #participant-list li .remove-participant {
+        width: 28px;
+        flex: 0 0 28px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* Make sure participant name doesn't overflow */
+    #participant-list li span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: calc(100% - 40px);
+    }
+}
+/* Mobile Optimization Fixes */
 /* Cat Animation Styles */
 .cat-animation {
     position: relative;
@@ -882,15 +960,18 @@ footer {
 }
 
 /* Responsive Styles */
+/* Mobile Optimization Fixes */
 @media (max-width: 600px) {
     #app {
-        padding: 15px;
+        padding: 10px;
         width: 100%;
+        max-width: 100%;
     }
     
     .card {
         padding: 15px;
         width: 100%;
+        box-sizing: border-box;
     }
     
     header h1 {
@@ -900,6 +981,11 @@ footer {
     .buttons-container {
         flex-direction: column;
         width: 100%;
+    }
+    
+    .buttons-container .btn {
+        width: 100%;
+        margin-bottom: 10px;
     }
     
     .results-page main {
@@ -913,8 +999,42 @@ footer {
         padding: 15px 10px;
     }
     
-    .btn {
-        width: 100%;
-        margin-bottom: 10px;
+    /* Fix for remove participant buttons on mobile */
+    #participant-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    #participant-list li .remove-participant {
+        flex-shrink: 0;
+        width: auto;
+        min-width: 28px;
+        height: 28px;
+        padding: 4px 8px;
+        margin-left: 10px;
+    }
+    
+    /* Fix remove participant button styling */
+    .btn.mini {
+        width: auto;
+        margin-bottom: 0;
+    }
+    
+    #participant-list li .remove-participant {
+        width: 28px;
+        flex: 0 0 28px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* Make sure participant name doesn't overflow */
+    #participant-list li span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: calc(100% - 40px);
     }
 }
+/* Mobile Optimization Fixes */

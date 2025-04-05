@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // No past exchanges functionality
             
             // Show empty list with control buttons
-            clearParticipantsList();
+            loadParticipants();
         }).catch(error => {
             console.error('Error during database setup:', error);
         });
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation(); // Prevent event from bubbling up
                 // Clear participants in localStorage
                 window.storageHelper.clearParticipants();
-                clearParticipantsList();
+                loadParticipants();
             });
         } catch (error) {
             console.error('Error loading participants from localStorage:', error);
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 // Clear participants in localStorage
                 window.storageHelper.clearParticipants();
-                clearParticipantsList();
+                loadParticipants();
             });
         }
     }
@@ -362,14 +362,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add event listeners for the control buttons
         document.getElementById('clear-participants').addEventListener('click', function(e) {
             e.stopPropagation();
-            clearParticipantsList();
+            loadParticipants();
         });
     }
     
     // Helper function to load participants from a specific exchange
     function loadExchangeParticipants(exchangeId, participants) {
         if (!participants || participants.length === 0) {
-            clearParticipantsList();
+            loadParticipants();
             return;
         }
         
@@ -403,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add event listeners for the control buttons
         document.getElementById('clear-participants').addEventListener('click', function(e) {
             e.stopPropagation(); // Prevent event from bubbling up
-            clearParticipantsList();
+            loadParticipants();
         });
         
         document.getElementById('load-all-participants').addEventListener('click', function(e) {
