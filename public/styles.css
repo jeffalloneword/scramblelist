@@ -196,6 +196,147 @@ textarea {
     z-index: 1000;
 }
 
+/* Cat Animation Styles */
+.cat-animation {
+    position: relative;
+    width: 200px;
+    height: 200px;
+}
+
+/* Cat Base */
+.cat {
+    position: absolute;
+    width: 50px;
+    height: 40px;
+    background-color: #000;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    top: 50%;
+    left: 10%;
+    transform: translateY(-50%);
+    animation: catRunning 10s linear infinite;
+}
+
+/* Cat Ears */
+.cat::before, .cat::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background-color: #000;
+    top: -10px;
+    border-radius: 50% 50% 0 0;
+}
+
+.cat::before {
+    left: 5px;
+    transform: rotate(-15deg);
+}
+
+.cat::after {
+    right: 5px;
+    transform: rotate(15deg);
+}
+
+/* Cat Tail */
+.tail {
+    position: absolute;
+    width: 25px;
+    height: 8px;
+    background-color: #000;
+    right: -20px;
+    top: 15px;
+    border-radius: 0 50% 50% 0;
+    transform-origin: left center;
+    animation: tailWag 0.5s infinite alternate;
+}
+
+/* Cat Legs */
+.legs::before, .legs::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 12px;
+    background-color: #000;
+    bottom: -10px;
+    border-radius: 0 0 3px 3px;
+    animation: legMove 0.3s infinite alternate;
+}
+
+.legs::before {
+    left: 10px;
+    animation-delay: 0.15s;
+}
+
+.legs::after {
+    right: 10px;
+}
+
+/* Cat Paws (Front) */
+.paws::before, .paws::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 6px;
+    background-color: #000;
+    bottom: -5px;
+    border-radius: 0 0 3px 3px;
+    animation: pawMove 0.3s infinite alternate;
+}
+
+.paws::before {
+    left: 35px;
+    animation-delay: 0.15s;
+}
+
+.paws::after {
+    left: 5px;
+}
+
+/* Ball */
+.ball {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: #f44336;
+    border-radius: 50%;
+    top: 50%;
+    left: 25%;
+    transform: translateY(-50%);
+    animation: ballRolling 10s linear infinite;
+}
+
+/* Animations */
+@keyframes catRunning {
+    0% { left: -10%; }
+    40% { left: 40%; }
+    45% { left: 38%; }  /* slight pause/back */
+    50% { left: 40%; }
+    90% { left: 90%; }
+    100% { left: 110%; }
+}
+
+@keyframes ballRolling {
+    0% { left: 0%; }
+    35% { left: 35%; }
+    90% { left: 80%; }
+    100% { left: 100%; }
+}
+
+@keyframes tailWag {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(20deg); }
+}
+
+@keyframes legMove {
+    0% { height: 12px; }
+    100% { height: 10px; }
+}
+
+@keyframes pawMove {
+    0% { height: 6px; }
+    100% { height: 4px; }
+}
+
 .hidden {
     display: none !important;
 }
@@ -561,4 +702,144 @@ footer {
     .buttons-container {
         flex-direction: column;
     }
+}
+/* Cat Animation Styles */
+.cat-animation {
+    position: relative;
+    width: 200px;
+    height: 200px;
+}
+
+/* Cat Base */
+.cat {
+    position: absolute;
+    width: 50px;
+    height: 40px;
+    background-color: #000;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    top: 50%;
+    left: 10%;
+    transform: translateY(-50%);
+    animation: catRunning 10s linear infinite;
+}
+
+/* Cat Ears */
+.cat::before, .cat::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background-color: #000;
+    top: -10px;
+    border-radius: 50% 50% 0 0;
+}
+
+.cat::before {
+    left: 5px;
+    transform: rotate(-15deg);
+}
+
+.cat::after {
+    right: 5px;
+    transform: rotate(15deg);
+}
+
+/* Cat Tail */
+.tail {
+    position: absolute;
+    width: 25px;
+    height: 8px;
+    background-color: #000;
+    right: -20px;
+    top: 15px;
+    border-radius: 0 50% 50% 0;
+    transform-origin: left center;
+    animation: tailWag 0.5s infinite alternate;
+}
+
+/* Cat Legs */
+.legs::before, .legs::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 12px;
+    background-color: #000;
+    bottom: -10px;
+    border-radius: 0 0 3px 3px;
+    animation: legMove 0.3s infinite alternate;
+}
+
+.legs::before {
+    left: 10px;
+    animation-delay: 0.15s;
+}
+
+.legs::after {
+    right: 10px;
+}
+
+/* Cat Paws (Front) */
+.paws::before, .paws::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 6px;
+    background-color: #000;
+    bottom: -5px;
+    border-radius: 0 0 3px 3px;
+    animation: pawMove 0.3s infinite alternate;
+}
+
+.paws::before {
+    left: 35px;
+    animation-delay: 0.15s;
+}
+
+.paws::after {
+    left: 5px;
+}
+
+/* Ball */
+.ball {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: #f44336;
+    border-radius: 50%;
+    top: 50%;
+    left: 25%;
+    transform: translateY(-50%);
+    animation: ballRolling 10s linear infinite;
+}
+
+/* Animations */
+@keyframes catRunning {
+    0% { left: -10%; }
+    40% { left: 40%; }
+    45% { left: 38%; }  /* slight pause/back */
+    50% { left: 40%; }
+    90% { left: 90%; }
+    100% { left: 110%; }
+}
+
+@keyframes ballRolling {
+    0% { left: 0%; }
+    35% { left: 35%; }
+    90% { left: 80%; }
+    100% { left: 100%; }
+}
+
+@keyframes tailWag {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(20deg); }
+}
+
+@keyframes legMove {
+    0% { height: 12px; }
+    100% { height: 10px; }
+}
+
+@keyframes pawMove {
+    0% { height: 6px; }
+    100% { height: 4px; }
 }

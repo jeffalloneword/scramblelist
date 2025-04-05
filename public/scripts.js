@@ -67,6 +67,83 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Initialize localStorage data structure if it doesn't exist
+    if (!localStorage.getItem('scramblelist_participants')) {
+        localStorage.setItem('scramblelist_participants', JSON.stringify([]));
+    }
+    
+    if (!localStorage.getItem('scramblelist_exchanges')) {
+        localStorage.setItem('scramblelist_exchanges', JSON.stringify([]));
+    }
+    
+    // Helper functions for localStorage data
+    window.storageHelper = {
+        // Get all participants from localStorage
+        getParticipants: function() {
+            const data = localStorage.getItem('scramblelist_participants');
+            return data ? JSON.parse(data) : [];
+        },
+        
+        // Save participants to localStorage
+        saveParticipants: function(participants) {
+            localStorage.setItem('scramblelist_participants', JSON.stringify(participants));
+        },
+        
+        // Add a participant to localStorage
+        addParticipant: function(name, email) {
+            const participants = this.getParticipants();
+            const newId = participants.length ? Math.max(...participants.map(p => p.id)) + 1 : 1;
+            const newParticipant = {
+                id: newId,
+                name: name,
+                email: email || null,
+                created_at: new Date().toISOString()
+            };
+            participants.push(newParticipant);
+            this.saveParticipants(participants);
+            return newParticipant;
+        },
+        
+        // Get all exchanges from localStorage
+        getExchanges: function() {
+            const data = localStorage.getItem('scramblelist_exchanges');
+            return data ? JSON.parse(data) : [];
+        },
+        
+        // Save exchanges to localStorage
+        saveExchanges: function(exchanges) {
+            localStorage.setItem('scramblelist_exchanges', JSON.stringify(exchanges));
+        },
+        
+        // Add an exchange to localStorage
+        addExchange: function(title, description, participants, assignments) {
+            const exchanges = this.getExchanges();
+            const newId = exchanges.length ? Math.max(...exchanges.map(e => e.id)) + 1 : 1;
+            const newExchange = {
+                id: newId,
+                title: title,
+                description: description || null,
+                created_at: new Date().toISOString(),
+                participants: participants,
+                assignments: assignments
+            };
+            exchanges.push(newExchange);
+            this.saveExchanges(exchanges);
+            return newExchange;
+        },
+        
+        // Get exchange by ID
+        getExchangeById: function(id) {
+            const exchanges = this.getExchanges();
+            return exchanges.find(e => e.id === parseInt(id)) || null;
+        },
+        
+        // Clear all participants
+        clearParticipants: function() {
+            this.saveParticipants([]);
+        }
+    };
+
     // DOM elements
     const addParticipantForm = document.getElementById('add-participant-form');
     const participantList = document.getElementById('participant-list');
@@ -109,36 +186,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Functions
     async function checkDatabaseConnection() {
         try {
-            const response = await fetch('/api/health');
-            const data = await response.json();
-            
-            if (data.database === 'connected') {
-                dbStatus.textContent = `Database connected | ${formatDate(data.timestamp)}`;
-                dbStatus.style.color = '#4caf50';
-            } else {
-                dbStatus.textContent = 'Database not connected';
-                dbStatus.style.color = '#d33';
-            }
+            // Use localStorage status instead of database
+            dbStatus.textContent = `Using localStorage | ${formatDate(new Date().toISOString())}`;
+            dbStatus.style.color = '#4caf50';
         } catch (error) {
-            console.error('Error checking database connection:', error);
-            dbStatus.textContent = 'Failed to check database connection';
+            console.error('Error checking localStorage:', error);
+            dbStatus.textContent = 'Error with localStorage';
             dbStatus.style.color = '#d33';
         }
     }
     
     async function setupDatabase() {
-        try {
-            await fetch('/api/setup');
-            console.log('Database setup complete');
-        } catch (error) {
-            console.error('Error setting up database:', error);
-        }
+        // No need to set up a database, we're using localStorage
+        console.log('localStorage initialized');
     }
     
     async function loadParticipants() {
         try {
-            const response = await fetch('/api/participants');
-            const participants = await response.json();
+            // Get participants from localStorage instead of API
+            const participants = window.storageHelper.getParticipants();
             
             participantList.innerHTML = '';
             
@@ -168,10 +234,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add event listeners for the control buttons
             document.getElementById('clear-participants').addEventListener('click', function(e) {
                 e.stopPropagation(); // Prevent event from bubbling up
+                // Clear participants in localStorage
+                window.storageHelper.clearParticipants();
                 clearParticipantsList();
             });
         } catch (error) {
-            console.error('Error loading participants:', error);
+            console.error('Error loading participants from localStorage:', error);
             participantList.innerHTML = '';
             const errorMessage = document.createElement('li');
             errorMessage.classList.add('empty-message', 'error-message');
@@ -191,6 +259,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add event listeners for the control buttons
             document.getElementById('clear-participants').addEventListener('click', function(e) {
                 e.stopPropagation();
+                // Clear participants in localStorage
+                window.storageHelper.clearParticipants();
                 clearParticipantsList();
             });
         }
@@ -207,17 +277,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
-            const response = await fetch('/api/participants', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name, email: '' })
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to add participant');
-            }
+            // Add participant to localStorage directly
+            window.storageHelper.addParticipant(name, '');
             
             // Clear the form
             document.getElementById('name').value = '';
@@ -242,9 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
-            // Get participants
-            const response = await fetch('/api/participants');
-            const participants = await response.json();
+            // Get participants from localStorage
+            const participants = window.storageHelper.getParticipants();
             
             if (participants.length < 2) {
                 alert('Need at least 2 participants to create an exchange');
@@ -260,25 +320,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Simulate processing delay for animation (10 seconds)
             await new Promise(resolve => setTimeout(resolve, 10000));
             
-            // Save the exchange to the database
-            const saveResponse = await fetch('/api/exchanges', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    title,
-                    description,
-                    participants,
-                    assignments
-                })
-            });
-            
-            if (!saveResponse.ok) {
-                throw new Error('Failed to save exchange');
-            }
-            
-            const savedExchange = await saveResponse.json();
+            // Save the exchange to localStorage
+            const savedExchange = window.storageHelper.addExchange(
+                title,
+                description,
+                participants,
+                assignments
+            );
             
             // Hide the spinner
             spinnerOverlay.classList.add('hidden');
@@ -434,8 +482,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function loadPastExchanges() {
         try {
-            const response = await fetch('/api/exchanges');
-            const exchanges = await response.json();
+            // Get exchanges from localStorage
+            const exchanges = window.storageHelper.getExchanges();
             
             if (exchanges.length === 0) {
                 pastExchangesContainer.innerHTML = '<p class="empty-message">No exchanges created yet.</p>';
@@ -448,13 +496,8 @@ document.addEventListener('DOMContentLoaded', () => {
             pastExchangesContainer.innerHTML = '';
             pastExchangesContainer.appendChild(exchangesList);
             
-            // Load and display each exchange as a list item
-            for (const exchange of exchanges) {
-                const detailsResponse = await fetch(`/api/exchanges/${exchange.id}`);
-                if (!detailsResponse.ok) continue;
-                
-                const details = await detailsResponse.json();
-                
+            // Display each exchange as a list item
+            for (const details of exchanges) {
                 // Create list item for this exchange
                 const exchangeItem = document.createElement('li');
                 exchangeItem.classList.add('past-exchange-item');
