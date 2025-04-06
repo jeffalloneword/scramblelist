@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
     console.log("Using localStorage for data persistence");
     
     // Initialize localStorage if it doesn't exist
