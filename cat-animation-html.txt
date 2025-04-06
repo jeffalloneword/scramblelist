@@ -1,0 +1,25 @@
+<!-- Spinner Overlay with Cat Animation -->
+<div id="spinner-overlay" class="spinner-overlay hidden">
+    <div class="cat-animation">
+        <div class="cat-container">
+            <div class="cat">
+                <div class="cat-head"></div>
+                <div class="cat-ears">
+                    <div class="ear left"></div>
+                    <div class="ear right"></div>
+                </div>
+                <div class="cat-body"></div>
+                <div class="cat-legs">
+                    <div class="leg front-left"></div>
+                    <div class="leg front-right"></div>
+                    <div class="leg back-left"></div>
+                    <div class="leg back-right"></div>
+                </div>
+                <div class="cat-tail"></div>
+            </div>
+            <div class="ball"></div>
+            <div class="shadow"></div>
+        </div>
+    </div>
+    <div class="loading-text">Loading your exchange...</div>
+</div>

@@ -51,11 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 { value: -200, duration: 2500, delay: 0 }
             ],
             translateY: [
-                { value: -30, duration: 300 },
+                { value: -35, duration: 300 },
+                { value: 20, duration: 300, delay: 0 },
+                { value: -30, duration: 300, delay: 300 },
                 { value: 20, duration: 300, delay: 0 },
                 { value: -25, duration: 300, delay: 300 },
-                { value: 20, duration: 300, delay: 0 },
-                { value: -20, duration: 300, delay: 300 },
                 { value: 20, duration: 300, delay: 0 },
                 { value: -15, duration: 300, delay: 300 },
                 { value: 20, duration: 300, delay: 0 }
@@ -102,25 +102,25 @@ document.addEventListener('DOMContentLoaded', () => {
             easing: 'easeOutInSine'
         }, 0);
         
-        // Cat tail wagging
+        // Cat tail wagging - more pronounced
         timeline.add({
             targets: catTail,
             rotateZ: [
-                { value: -20, duration: 200 },
-                { value: 20, duration: 200 },
-                { value: -20, duration: 200 },
-                { value: 20, duration: 200 }
+                { value: -30, duration: 200 },
+                { value: 30, duration: 200 },
+                { value: -30, duration: 200 },
+                { value: 30, duration: 200 }
             ],
             easing: 'easeInOutSine',
             loop: true
         }, 0);
         
-        // Cat legs movement (running)
+        // Cat legs movement (running) - more dynamic
         timeline.add({
             targets: legs,
             height: [
-                { value: 18, duration: 100 },
-                { value: 12, duration: 100 }
+                { value: 20, duration: 100 },
+                { value: 10, duration: 100 }
             ],
             delay: anime.stagger(50),
             easing: 'easeInOutQuad',
@@ -131,19 +131,19 @@ document.addEventListener('DOMContentLoaded', () => {
         timeline.add({
             targets: catHead,
             translateY: [
-                { value: -2, duration: 200 },
+                { value: -3, duration: 200 },
                 { value: 0, duration: 200 }
             ],
             easing: 'easeInOutSine',
             loop: true
         }, 0);
         
-        // Cat ears twitching
+        // Cat ears twitching - more pronounced
         timeline.add({
             targets: [leftEar, rightEar],
             rotateZ: [
-                { value: '+=5', duration: 300 },
-                { value: '-=5', duration: 300 }
+                { value: '+=10', duration: 300 },
+                { value: '-=10', duration: 300 }
             ],
             delay: anime.stagger(100),
             easing: 'easeInOutSine',
@@ -153,8 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Loading text pulse
         timeline.add({
             targets: loadingText,
-            opacity: [0.4, 0.9],
-            duration: 1000,
+            opacity: [0.5, 1],
+            duration: 800,
             easing: 'easeInOutQuad',
             loop: true
         }, 0);

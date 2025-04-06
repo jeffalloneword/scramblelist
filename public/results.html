@@ -3,44 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listerical! - Assignment Results</title>
+    <title>Listerical! - Exchange Results</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="cat-animation.css">
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+    <script src="cat-animation.js"></script>
+    <script src="results.js" defer></script>
 </head>
 <body>
-    <div id="app" class="results-page">
-        <header>
-            <h1>Listerical!</h1>
-            <p>Gift Exchange Results</p>
-        </header>
-
-        <main>
-            <section id="results-display">
-                <div class="card">
-                    <h2 id="exchange-title">Exchange Title</h2>
-                    <p id="exchange-description" class="results-description">Exchange description will appear here.</p>
-                    
-                    <div class="results-date">
-                        <span id="exchange-date">Date</span>
+    <!-- Spinner Overlay with Cat Animation -->
+    <div id="spinner-overlay" class="spinner-overlay hidden">
+        <div class="cat-animation">
+            <div class="cat-container">
+                <div class="cat">
+                    <div class="cat-head"></div>
+                    <div class="cat-ears">
+                        <div class="ear left"></div>
+                        <div class="ear right"></div>
                     </div>
-                    
-                    <div class="assignments-container">
-                        <h3>Gift Exchange Assignments</h3>
-                        <ul id="assignments-list"></ul>
+                    <div class="cat-body"></div>
+                    <div class="cat-legs">
+                        <div class="leg front-left"></div>
+                        <div class="leg front-right"></div>
+                        <div class="leg back-left"></div>
+                        <div class="leg back-right"></div>
                     </div>
-                    
-                    <div class="buttons-container">
-                        <button id="back-to-home" class="btn secondary">Back to Home</button>
-                    </div>
+                    <div class="cat-tail"></div>
                 </div>
-            </section>
-        </main>
-
-        <footer>
-            <p>Listerical! - Gift Exchange Organizer | Using Browser Local Storage</p>
-            <p id="database-status"></p>
-        </footer>
+                <div class="ball"></div>
+                <div class="shadow"></div>
+            </div>
+        </div>
+        <div class="loading-text">Loading your exchange...</div>
     </div>
 
-    <script src="results.js"></script>
+    <header>
+        <div class="container">
+            <h1>Listerical!</h1>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="results-section">
+                <div class="exchange-info">
+                    <h2 id="exchange-title">Loading Exchange Title...</h2>
+                    <p id="exchange-description" class="description">Loading description...</p>
+                </div>
+                
+                <div class="results-container">
+                    <h3>Gift Exchange Assignments</h3>
+                    <ul id="assignments-list"></ul>
+                    <div class="back-button-container">
+                        <a href="/" class="btn back-btn">Back to Home</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Listerical! Gift Exchange Generator</p>
+        </div>
+    </footer>
 </body>
 </html>

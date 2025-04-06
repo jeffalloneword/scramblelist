@@ -54,10 +54,10 @@ function deployApp() {
     }
     
     // Create a deployment README
-    const readmeContent = `# Scramblelist Deployment
+    const readmeContent = `# Listerical! Deployment
 
 ## About
-This is a deployed version of the Scramblelist gift exchange organizer app.
+This is a deployed version of the Listerical! gift exchange organizer app.
 
 ## Running the app
 1. Navigate to this directory
@@ -69,6 +69,8 @@ This is a deployed version of the Scramblelist gift exchange organizer app.
 - Add gift exchange participants
 - Generate random gift exchange assignments
 - View assignments on a clean results page
+- Engaging cat animation during loading screens
+- Responsive design for both desktop and mobile devices
 - Persistent storage using browser localStorage
 `;
     
@@ -77,7 +79,7 @@ This is a deployed version of the Scramblelist gift exchange organizer app.
     
     // Create a simple start script
     const startScript = `#!/bin/bash
-echo "Starting Scramblelist app..."
+echo "Starting Listerical! app..."
 cd "$(dirname "$0")"
 npm install
 node app.js
