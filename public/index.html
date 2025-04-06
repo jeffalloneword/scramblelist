@@ -5,17 +5,34 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Listerical! - Gift Exchange Organizer</title>
         <link rel="stylesheet" href="styles.css" />
+        <link rel="stylesheet" href="cat-animation.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     </head>
     <body>
-        <!-- Cat Animation (initially hidden) -->
+        <!-- Enhanced Cat Animation (initially hidden) -->
         <div id="spinner-overlay" class="spinner-overlay hidden">
             <div class="cat-animation">
-                <div class="cat">
-                    <div class="tail"></div>
-                    <div class="legs"></div>
-                    <div class="paws"></div>
+                <!-- Cat SVG structure for better animation control -->
+                <div class="cat-container">
+                    <div class="cat">
+                        <div class="cat-head"></div>
+                        <div class="cat-ears">
+                            <div class="ear left"></div>
+                            <div class="ear right"></div>
+                        </div>
+                        <div class="cat-body"></div>
+                        <div class="cat-tail"></div>
+                        <div class="cat-legs">
+                            <div class="leg front-left"></div>
+                            <div class="leg front-right"></div>
+                            <div class="leg back-left"></div>
+                            <div class="leg back-right"></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="ball"></div>
+                <div class="shadow"></div>
+                <p class="loading-text">Generating your gift exchange...</p>
             </div>
         </div>
 
@@ -103,5 +120,6 @@
         </div>
 
         <script src="scripts.js"></script>
+        <script src="cat-animation.js"></script>
     </body>
 </html>

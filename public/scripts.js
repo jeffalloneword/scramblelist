@@ -261,8 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
-            // Show the loading spinner
-            spinnerOverlay.classList.remove('hidden');
+            // Show the enhanced cat animation
+            startCatAnimation();
             
             // Shuffle participants and ensure no one gets themselves
             const assignments = generateRandomAssignments(participants);
@@ -278,14 +278,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 assignments
             );
             
-            // Hide the spinner
-            spinnerOverlay.classList.add('hidden');
+            // Stop the cat animation
+            stopCatAnimation();
             
             // Redirect to the results page with the exchange ID
             window.location.href = `results.html?id=${savedExchange.id}`;
         } catch (error) {
-            // Hide the spinner in case of error
-            spinnerOverlay.classList.add('hidden');
+            // Stop the cat animation in case of error
+            stopCatAnimation();
             console.error('Error creating exchange:', error);
             alert('Failed to create exchange: ' + error.message);
         }
