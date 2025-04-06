@@ -1,3 +1,4 @@
+
 {
   "name": "workspace",
   "version": "1.0.0",
@@ -13,7 +14,6 @@
     "animejs": "^4.0.0",
     "cookie-parser": "^1.4.7",
     "express": "^5.1.0",
-    "express-session": "^1.18.1",
-    "pg": "^8.14.1"
+    "express-session": "^1.18.1"
   }
 }
