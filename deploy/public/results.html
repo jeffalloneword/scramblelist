@@ -3,44 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listerical! - Assignment Results</title>
+    <title>Listerical! - Exchange Results</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="results.js" defer></script>
 </head>
 <body>
-    <div id="app" class="results-page">
-        <header>
-            <h1>Listerical!</h1>
-            <p>Gift Exchange Results</p>
-        </header>
-
-        <main>
-            <section id="results-display">
-                <div class="card">
-                    <h2 id="exchange-title">Exchange Title</h2>
-                    <p id="exchange-description" class="results-description">Exchange description will appear here.</p>
-                    
-                    <div class="results-date">
-                        <span id="exchange-date">Date</span>
-                    </div>
-                    
-                    <div class="assignments-container">
-                        <h3>Gift Exchange Assignments</h3>
-                        <ul id="assignments-list"></ul>
-                    </div>
-                    
-                    <div class="buttons-container">
-                        <button id="back-to-home" class="btn secondary">Back to Home</button>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <footer>
-            <p>Listerical! - Gift Exchange Organizer | Using Browser Local Storage</p>
-            <p id="database-status"></p>
-        </footer>
+    <!-- Spinner Overlay with Progress Bar (initially hidden) -->
+    <div id="spinner-overlay" class="spinner-overlay hidden">
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="loading-text">Loading your exchange...</div>
+        </div>
     </div>
 
-    <script src="results.js"></script>
+    <header>
+        <div class="container">
+            <h1>Listerical!</h1>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="results-section">
+                <div class="exchange-info">
+                    <h2 id="exchange-title">Loading Exchange Title...</h2>
+                    <p id="exchange-description" class="description">Loading description...</p>
+                </div>
+                
+                <div class="results-container">
+                    <h3>Gift Exchange Assignments</h3>
+                    <ul id="assignments-list"></ul>
+                    <div class="back-button-container">
+                        <a href="/" class="btn back-btn">Back to Home</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Listerical! Gift Exchange Generator</p>
+        </div>
+    </footer>
 </body>
 </html>

@@ -1,95 +1,65 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Get DOM elements
-    const exchangeTitle = document.getElementById('exchange-title');
-    const exchangeDescription = document.getElementById('exchange-description');
-    const exchangeDate = document.getElementById('exchange-date');
+    const exchangeTitleElement = document.getElementById('exchange-title');
+    const exchangeDescriptionElement = document.getElementById('exchange-description');
     const assignmentsList = document.getElementById('assignments-list');
-    const backButton = document.getElementById('back-to-home');
-    const dbStatus = document.getElementById('database-status');
+    const spinnerOverlay = document.getElementById('spinner-overlay');
+    const progressFill = document.querySelector('.progress-fill');
     
-    // Helper functions for localStorage data (same as in main script)
-    window.storageHelper = {
-        // Get all participants from localStorage
-        getParticipants: function() {
-            const data = localStorage.getItem('scramblelist_participants');
-            return data ? JSON.parse(data) : [];
-        },
+    // Show the loading spinner with progress bar
+    spinnerOverlay.classList.remove('hidden');
+    progressFill.style.width = '0%';
+    
+    // Simulate a loading process with the progress bar
+    const startTime = Date.now();
+    const duration = 5000; // 5 seconds
+    
+    const updateProgress = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration * 100, 100);
+        progressFill.style.width = `${progress}%`;
         
-        // Get all exchanges from localStorage
-        getExchanges: function() {
-            const data = localStorage.getItem('scramblelist_exchanges');
-            return data ? JSON.parse(data) : [];
-        },
-        
-        // Get exchange by ID
-        getExchangeById: function(id) {
-            const exchanges = this.getExchanges();
-            return exchanges.find(e => e.id === parseInt(id)) || null;
+        if (progress < 100) {
+            requestAnimationFrame(updateProgress);
+        } else {
+            // When progress is complete, load the exchange data
+            spinnerOverlay.classList.add('hidden');
+            loadExchangeDetails();
         }
     };
     
-    // Format date function (same as in main script)
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(date);
-    }
+    requestAnimationFrame(updateProgress);
     
-    // Get the exchange ID from the URL query parameter
-    function getExchangeIdFromURL() {
-        const params = new URLSearchParams(window.location.search);
-        return params.get('id');
-    }
-    
-    // Load exchange details and assignments
+    // Function to load exchange details
     function loadExchangeDetails() {
-        const exchangeId = getExchangeIdFromURL();
+        // Get the exchange data from localStorage
+        const exchangeData = JSON.parse(localStorage.getItem('currentExchange'));
         
-        if (!exchangeId) {
-            alert('No exchange ID provided');
-            window.location.href = 'index.html';
+        if (!exchangeData) {
+            window.location.href = '/';
             return;
         }
         
-        // Get exchange details from localStorage
-        const exchange = window.storageHelper.getExchangeById(parseInt(exchangeId));
+        // Set the title and description
+        exchangeTitleElement.textContent = exchangeData.title;
         
-        if (!exchange) {
-            alert('Exchange not found');
-            window.location.href = 'index.html';
-            return;
+        if (exchangeData.description) {
+            exchangeDescriptionElement.textContent = exchangeData.description;
+        } else {
+            exchangeDescriptionElement.textContent = 'No description provided.';
         }
         
-        // Update the page with exchange details
-        exchangeTitle.textContent = exchange.title;
-        exchangeDescription.textContent = exchange.description || 'No description provided';
-        exchangeDate.textContent = formatDate(exchange.created_at);
-        
-        // Display assignments
+        // Display the assignments
         assignmentsList.innerHTML = '';
-        exchange.assignments.forEach(assignment => {
+        exchangeData.assignments.forEach(assignment => {
             const li = document.createElement('li');
-            li.textContent = `${assignment.giver.name} → ${assignment.receiver.name}`;
+            li.textContent = `${assignment.giver} → ${assignment.receiver}`;
             assignmentsList.appendChild(li);
         });
-        
-        // Update database status display
-        dbStatus.textContent = `Using localStorage | ${formatDate(new Date().toISOString())}`;
-        dbStatus.style.color = '#4caf50';
     }
     
-    // Navigate back to home page
-    backButton.addEventListener('click', function() {
-        window.location.href = 'index.html';
-    });
-    
-    // Initialize
-    loadExchangeDetails();
+    // Format date function (utility)
+    function formatDate(dateString) {
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString(undefined, options);
+    }
 });

@@ -1,421 +1,197 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // No authentication needed - using localStorage directly
     console.log("Using localStorage for data persistence");
-
-    // Initialize localStorage data structure if it doesn't exist
-    if (!localStorage.getItem('scramblelist_participants')) {
-        localStorage.setItem('scramblelist_participants', JSON.stringify([]));
-    }
     
-    if (!localStorage.getItem('scramblelist_exchanges')) {
-        localStorage.setItem('scramblelist_exchanges', JSON.stringify([]));
+    // Initialize localStorage if it doesn't exist
+    if (!localStorage.getItem('participants')) {
+        localStorage.setItem('participants', JSON.stringify([]));
     }
+    console.log("localStorage initialized");
     
-    // Helper functions for localStorage data
-    window.storageHelper = {
-        // Get all participants from localStorage
-        getParticipants: function() {
-            const data = localStorage.getItem('scramblelist_participants');
-            return data ? JSON.parse(data) : [];
-        },
-        
-        // Save participants to localStorage
-        saveParticipants: function(participants) {
-            localStorage.setItem('scramblelist_participants', JSON.stringify(participants));
-        },
-        
-        // Add a participant to localStorage
-        addParticipant: function(name, email) {
-            const participants = this.getParticipants();
-            const newId = participants.length ? Math.max(...participants.map(p => p.id)) + 1 : 1;
-            const newParticipant = {
-                id: newId,
-                name: name,
-                email: email || null,
-                created_at: new Date().toISOString()
-            };
-            participants.push(newParticipant);
-            this.saveParticipants(participants);
-            return newParticipant;
-        },
-        
-        // Get all exchanges from localStorage
-        getExchanges: function() {
-            const data = localStorage.getItem('scramblelist_exchanges');
-            return data ? JSON.parse(data) : [];
-        },
-        
-        // Save exchanges to localStorage
-        saveExchanges: function(exchanges) {
-            localStorage.setItem('scramblelist_exchanges', JSON.stringify(exchanges));
-        },
-        
-        // Add an exchange to localStorage
-        addExchange: function(title, description, participants, assignments) {
-            const exchanges = this.getExchanges();
-            const newId = exchanges.length ? Math.max(...exchanges.map(e => e.id)) + 1 : 1;
-            const newExchange = {
-                id: newId,
-                title: title,
-                description: description || null,
-                created_at: new Date().toISOString(),
-                participants: participants,
-                assignments: assignments
-            };
-            exchanges.push(newExchange);
-            this.saveExchanges(exchanges);
-            return newExchange;
-        },
-        
-        // Get exchange by ID
-        getExchangeById: function(id) {
-            const exchanges = this.getExchanges();
-            return exchanges.find(e => e.id === parseInt(id)) || null;
-        },
-        
-        // Clear all participants
-        clearParticipants: function() {
-            this.saveParticipants([]);
-        },
-        
-        // Remove specific participant by ID
-        removeParticipant: function(participantId) {
-            const participants = this.getParticipants();
-            const filteredParticipants = participants.filter(p => p.id !== participantId);
-            this.saveParticipants(filteredParticipants);
-            return filteredParticipants;
-        }
-    };
-
     // DOM elements
     const addParticipantForm = document.getElementById('add-participant-form');
-    const participantList = document.getElementById('participant-list');
-    const createExchangeForm = document.getElementById('create-exchange-form');
+    const participantNameInput = document.getElementById('participant-name');
+    const participantsList = document.getElementById('participants-list');
+    const clearParticipantsBtn = document.getElementById('clear-participants');
     const generateBtn = document.getElementById('generate-btn');
-    const dbStatus = document.getElementById('database-status');
+    const exchangeTitleInput = document.getElementById('exchange-title');
+    const exchangeDescriptionInput = document.getElementById('exchange-description');
     const spinnerOverlay = document.getElementById('spinner-overlay');
-
+    const progressFill = document.querySelector('.progress-fill');
     
-    // Make sure spinner is hidden on page load
-    if (spinnerOverlay) {
-        spinnerOverlay.classList.add('hidden');
+    // Load participants from localStorage
+    loadParticipants();
+    
+    // Event listeners
+    addParticipantForm.addEventListener('submit', handleAddParticipant);
+    clearParticipantsBtn.addEventListener('click', clearParticipantsList);
+    generateBtn.addEventListener('click', handleCreateExchange);
+    
+    // Function to load participants from localStorage
+    function loadParticipants() {
+        const participants = JSON.parse(localStorage.getItem('participants')) || [];
+        renderParticipantsList(participants);
     }
     
-    // Only proceed with app initialization if we have all the necessary elements
-    if (addParticipantForm && participantList) {
-        // Check database connection
-        checkDatabaseConnection();
-        
-        // Initialize the participants table and only load past exchanges initially
-        setupDatabase().then(() => {
-            // Initialize with empty participant list
-            // No past exchanges functionality
-            
-            // Show empty list with control buttons
-            loadParticipants();
-        }).catch(error => {
-            console.error('Error during database setup:', error);
+    // Function to render the participants list
+    function renderParticipantsList(participants) {
+        participantsList.innerHTML = '';
+        participants.forEach((participant, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                ${participant.name}
+                <button class="remove-btn" data-index="${index}">Remove</button>
+            `;
+            participantsList.appendChild(li);
         });
         
-        // Event Listeners
-        addParticipantForm.addEventListener('submit', handleAddParticipant);
-        createExchangeForm.addEventListener('submit', handleCreateExchange);
-    }
-    
-    // Functions
-    async function checkDatabaseConnection() {
-        try {
-            // Use localStorage status instead of database
-            dbStatus.textContent = `Using localStorage | ${formatDate(new Date().toISOString())}`;
-            dbStatus.style.color = '#4caf50';
-        } catch (error) {
-            console.error('Error checking localStorage:', error);
-            dbStatus.textContent = 'Error with localStorage';
-            dbStatus.style.color = '#d33';
-        }
-    }
-    
-    async function setupDatabase() {
-        // No need to set up a database, we're using localStorage
-        console.log('localStorage initialized');
-    }
-    
-    async function loadParticipants() {
-        try {
-            // Get participants from localStorage instead of API
-            const participants = window.storageHelper.getParticipants();
-            
-            participantList.innerHTML = '';
-            
-            // Add control buttons at the top - only Clear All button for regular view
-            const controls = document.createElement('li');
-            controls.classList.add('participant-controls');
-            controls.innerHTML = `
-                <button id="clear-participants" class="btn mini danger">Clear All</button>
-            `;
-            participantList.appendChild(controls);
-            
-            if (participants.length === 0) {
-                const emptyMessage = document.createElement('li');
-                emptyMessage.classList.add('empty-message');
-                emptyMessage.textContent = 'No participants added yet.';
-                participantList.appendChild(emptyMessage);
-            } else {
-                participants.forEach(participant => {
-                    const li = document.createElement('li');
-                    li.dataset.participantId = participant.id;
-                    li.innerHTML = `
-                        <span>${participant.name}${participant.email ? ` (${participant.email})` : ''}</span>
-                        <button class="remove-participant btn mini danger">✕</button>
-                    `;
-                    participantList.appendChild(li);
-                    
-                    // Add event listener for removing this participant
-                    li.querySelector('.remove-participant').addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        // Remove this participant by ID
-                        window.storageHelper.removeParticipant(participant.id);
-                        // Reload the participants list to reflect changes
-                        loadParticipants();
-                    });
-                });
-            }
-            
-            // Add event listeners for the control buttons
-            document.getElementById('clear-participants').addEventListener('click', function(e) {
-                e.stopPropagation(); // Prevent event from bubbling up
-                // Clear participants in localStorage
-                window.storageHelper.clearParticipants();
-                loadParticipants();
+        // Add event listeners to remove buttons
+        document.querySelectorAll('.remove-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const index = parseInt(e.target.getAttribute('data-index'));
+                removeParticipant(index);
             });
-        } catch (error) {
-            console.error('Error loading participants from localStorage:', error);
-            participantList.innerHTML = '';
-            const errorMessage = document.createElement('li');
-            errorMessage.classList.add('empty-message', 'error-message');
-            errorMessage.textContent = 'Error loading participants';
-            participantList.appendChild(errorMessage);
-            
-            // Still add the control buttons
-            const controls = document.createElement('li');
-            controls.classList.add('participant-controls');
-            controls.innerHTML = `
-                <button id="clear-participants" class="btn mini danger">Clear All</button>
-            `;
-            
-            // Insert at the beginning
-            participantList.insertBefore(controls, participantList.firstChild);
-            
-            // Add event listeners for the control buttons
-            document.getElementById('clear-participants').addEventListener('click', function(e) {
-                e.stopPropagation();
-                // Clear participants in localStorage
-                window.storageHelper.clearParticipants();
-                loadParticipants();
-            });
-        }
+        });
     }
     
+    // Function to remove a participant
+    function removeParticipant(index) {
+        const participants = JSON.parse(localStorage.getItem('participants')) || [];
+        participants.splice(index, 1);
+        localStorage.setItem('participants', JSON.stringify(participants));
+        renderParticipantsList(participants);
+    }
+    
+    // Function to handle adding a participant
     async function handleAddParticipant(e) {
         e.preventDefault();
         
-        const name = document.getElementById('name').value;
+        const name = participantNameInput.value.trim();
         
-        if (!name.trim()) {
-            alert('Name is required');
+        if (!name) {
+            alert('Please enter a participant name');
             return;
         }
         
-        try {
-            // Add participant to localStorage directly
-            window.storageHelper.addParticipant(name, '');
-            
-            // Clear the form
-            document.getElementById('name').value = '';
-            
-            // Reload participants
-            loadParticipants();
-        } catch (error) {
-            console.error('Error adding participant:', error);
-            alert('Failed to add participant');
+        const participants = JSON.parse(localStorage.getItem('participants')) || [];
+        
+        // Check for duplicate names
+        if (participants.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+            alert('This participant is already added');
+            return;
+        }
+        
+        participants.push({ name });
+        localStorage.setItem('participants', JSON.stringify(participants));
+        
+        // Update the UI
+        renderParticipantsList(participants);
+        
+        // Clear input fields
+        participantNameInput.value = '';
+        participantNameInput.focus();
+    }
+    
+    // Function to clear participants list
+    function clearParticipantsList() {
+        if (confirm('Are you sure you want to clear all participants?')) {
+            localStorage.setItem('participants', JSON.stringify([]));
+            renderParticipantsList([]);
         }
     }
     
+    // Function to handle creating an exchange
     async function handleCreateExchange(e) {
         e.preventDefault();
         
-        const title = document.getElementById('exchange-title').value;
-        const description = document.getElementById('exchange-description').value;
+        const title = exchangeTitleInput.value.trim();
+        const description = exchangeDescriptionInput.value.trim();
+        const participants = JSON.parse(localStorage.getItem('participants')) || [];
         
-        if (!title.trim()) {
-            alert('Title is required');
+        if (!title) {
+            alert('Please enter an exchange title');
             return;
         }
         
-        try {
-            // Get participants from localStorage
-            const participants = window.storageHelper.getParticipants();
-            
-            if (participants.length < 2) {
-                alert('Need at least 2 participants to create an exchange');
-                return;
-            }
-            
-            // Show the enhanced cat animation
-            startCatAnimation();
-            
-            // Shuffle participants and ensure no one gets themselves
-            const assignments = generateRandomAssignments(participants);
-            
-            // Simulate processing delay for animation (10 seconds)
-            await new Promise(resolve => setTimeout(resolve, 10000));
-            
-            // Save the exchange to localStorage
-            const savedExchange = window.storageHelper.addExchange(
-                title,
-                description,
-                participants,
-                assignments
-            );
-            
-            // Stop the cat animation
-            stopCatAnimation();
-            
-            // Redirect to the results page with the exchange ID
-            window.location.href = `results.html?id=${savedExchange.id}`;
-        } catch (error) {
-            // Stop the cat animation in case of error
-            stopCatAnimation();
-            console.error('Error creating exchange:', error);
-            alert('Failed to create exchange: ' + error.message);
+        if (participants.length < 2) {
+            alert('Please add at least 2 participants');
+            return;
         }
+        
+        // Show the spinner with progress bar
+        spinnerOverlay.classList.remove('hidden');
+        
+        // Run a timed progress bar animation
+        progressFill.style.width = '0%';
+        const startTime = Date.now();
+        const duration = 5000; // 5 seconds
+        
+        const updateProgress = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration * 100, 100);
+            progressFill.style.width = `${progress}%`;
+            
+            if (progress < 100) {
+                requestAnimationFrame(updateProgress);
+            } else {
+                // When progress is complete, proceed with the exchange
+                completeExchangeGeneration(title, description, participants);
+            }
+        };
+        
+        requestAnimationFrame(updateProgress);
     }
     
+    // Function to complete the exchange generation after the progress bar finishes
+    function completeExchangeGeneration(title, description, participants) {
+        // Generate the random assignments
+        const assignments = generateRandomAssignments(participants);
+        
+        // Save the exchange data to localStorage
+        const exchangeData = {
+            title,
+            description,
+            date: new Date().toISOString(),
+            participants,
+            assignments
+        };
+        
+        // Save to localStorage
+        localStorage.setItem('currentExchange', JSON.stringify(exchangeData));
+        
+        // Redirect to the results page
+        window.location.href = `/results.html`;
+    }
+    
+    // Function to generate random assignments
     function generateRandomAssignments(participants) {
-        if (participants.length < 2) return [];
-        
-        // Create a copy of participants to avoid modifying the original
+        // Create a copy of the participants array to shuffle
         const givers = [...participants];
+        const receivers = [...participants];
         
-        // We'll allocate receivers in a way that ensures no one gets themselves
-        let validAssignments = false;
-        let assignments = [];
+        // Shuffle the receivers array
+        for (let i = receivers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [receivers[i], receivers[j]] = [receivers[j], receivers[i]];
+        }
         
-        // Keep trying until we get valid assignments
-        while (!validAssignments) {
-            // Shuffle the array
-            const shuffledReceivers = [...givers].sort(() => Math.random() - 0.5);
-            
-            // Check if any person is their own receiver
-            let invalid = false;
-            for (let i = 0; i < givers.length; i++) {
-                if (givers[i].id === shuffledReceivers[i].id) {
-                    invalid = true;
-                    break;
-                }
-            }
-            
-            if (!invalid) {
-                validAssignments = true;
-                assignments = givers.map((giver, index) => ({
-                    giver,
-                    receiver: shuffledReceivers[index]
-                }));
+        // Make sure no one is assigned to themselves
+        let valid = true;
+        for (let i = 0; i < givers.length; i++) {
+            if (givers[i].name === receivers[i].name) {
+                valid = false;
+                break;
             }
         }
         
-        return assignments;
-    }
-    
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(date);
-    }
-    
-    // Helper function to clear participants list but keep control buttons
-    function clearParticipantsList() {
-        // Clear the list
-        participantList.innerHTML = '';
-        
-        // Add control buttons at the top - only Clear All for empty lists
-        const controls = document.createElement('li');
-        controls.classList.add('participant-controls');
-        controls.innerHTML = `
-            <button id="clear-participants" class="btn mini danger">Clear All</button>
-        `;
-        participantList.appendChild(controls);
-        
-        // Add empty message
-        const emptyMessage = document.createElement('li');
-        emptyMessage.classList.add('empty-message');
-        emptyMessage.textContent = 'No participants added yet. Add participants above.';
-        participantList.appendChild(emptyMessage);
-        
-        // Add event listeners for the control buttons
-        document.getElementById('clear-participants').addEventListener('click', function(e) {
-            e.stopPropagation();
-            loadParticipants();
-        });
-    }
-    
-    // Helper function to load participants from a specific exchange
-    function loadExchangeParticipants(exchangeId, participants) {
-        if (!participants || participants.length === 0) {
-            loadParticipants();
-            return;
+        // If not valid, try again recursively
+        if (!valid && participants.length > 1) {
+            return generateRandomAssignments(participants);
         }
         
-        participantList.innerHTML = '';
-        
-        // Add control buttons at the top
-        const controls = document.createElement('li');
-        controls.classList.add('participant-controls');
-        controls.innerHTML = `
-            <button id="clear-participants" class="btn mini danger">Clear All</button>
-            <button id="load-all-participants" class="btn mini secondary">Load All Participants</button>
-        `;
-        participantList.appendChild(controls);
-        
-        // Add participants from this exchange
-        participants.forEach(participant => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <span>${participant.name}${participant.email ? ` (${participant.email})` : ''}</span>
-                <span class="exchange-reference">From exchange #${exchangeId}</span>
-            `;
-            participantList.appendChild(li);
-        });
-        
-        // Add a notice that these are participants from a previous exchange
-        const notice = document.createElement('li');
-        notice.classList.add('exchange-notice');
-        notice.innerHTML = '<em>Viewing participants from selected exchange. You can add or remove participants for new exchanges. Each exchange can have different participants.</em>';
-        participantList.appendChild(notice);
-        
-        // Add event listeners for the control buttons
-        document.getElementById('clear-participants').addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent event from bubbling up
-            loadParticipants();
-        });
-        
-        document.getElementById('load-all-participants').addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent event from bubbling up
-            loadParticipants();
-        });
-    }
-    
-    async function loadPastExchanges() {
-        // Past exchanges functionality has been removed
-        // This function is kept for compatibility but does nothing
-        console.log("Past exchanges functionality has been removed");
-        return;
+        // Create the assignments
+        return givers.map((giver, index) => ({
+            giver: giver.name,
+            receiver: receivers[index].name
+        }));
     }
 });
